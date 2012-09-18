@@ -18,12 +18,17 @@ end
 
 get '/subscribe', provides: 'text/event-stream' do
   stream :keep_open do |out|
+    timer = EventMachine::PeriodicTimer.new(28) do
+      out << "event: keepalive\ndata: \n\n"
+    end
+
     subscription = $pubsub.subscribe params[:user], "chat" do |channel, data|
-      out << "data: #{data}\n\n"
+      out << "data: channel: #{channel} #{data}\n\n"
     end
     
     out.callback do
-      $pubsub.unsubscribe subscription
+      timer.cancel
+      $pubsub.unsubscribe(subscription)
     end
   end
 end
@@ -70,7 +75,10 @@ __END__
 <script>
   // reading
   var es = new EventSource('/subscribe?user=<%= user %>');
-  es.onmessage = function(e) { $('#chat').append(e.data + "\n") };
+  es.onmessage = function(e) { $('#chat').append(e.data + "\n"); };
+  es.addEventListener('keepalive', function(e) {
+    $('#chat').append("."); 
+  }, false);
 
   // writing
   $("form").live("submit", function(e) {
