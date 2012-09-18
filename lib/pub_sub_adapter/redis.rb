@@ -1,7 +1,6 @@
 require "uri"
 require "redis"
-require_relative "redis/evented_redis"
-
+require_relative "evented_redis"
 
 class PubSubAdapter::Redis
   def initialize(url)

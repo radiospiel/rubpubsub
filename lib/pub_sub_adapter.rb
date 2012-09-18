@@ -28,7 +28,7 @@ end
 
 class PubSubAdapter
   def self.redis(url)
-    require_relative "redis"
+    require_relative "pub_sub_adapter/redis"
 
     PubSubAdapter::Redis.new(url)
   end
