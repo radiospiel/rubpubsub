@@ -4,15 +4,22 @@ require 'eventmachine'
 # the new PubSub features in Redis.
 #
 # See https://gist.github.com/352068
+#
+# Support for AUTH command added by @radiospiel 
+#
 class EventedRedis < EM::Connection
-  def self.connect
-    host = (ENV['REDIS_HOST'] || 'localhost')
-    port = (ENV['REDIS_PORT'] || 6379).to_i
-    EM.connect host, port, self
+  def self.connect(options)
+    EM.connect options[:host], options[:port], self do |evented_redis|
+      evented_redis.auth options[:password]
+    end
   end
-
+  
   def post_init
     @blocks = {}
+  end
+  
+  def auth(password)
+    call_command('auth', password) if password
   end
   
   def subscribe(*channels, &blk)
@@ -48,8 +55,10 @@ class EventedRedis < EM::Connection
     when '*'
       size = buffer.gets.to_i
       parts = size.times.map { read_object(buffer) }
-    when '-'
+    when '-'                    # error line response
       raise buffer.read
+    when '+'                    # single line response
+      buffer.read
     else
       raise "unsupported response type: #{type.inspect}"
     end

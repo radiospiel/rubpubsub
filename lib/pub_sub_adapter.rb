@@ -26,11 +26,10 @@ class PubSubAdapter
   end
 end
 
-
 class PubSubAdapter
-  def self.redis
+  def self.redis(url)
     require_relative "redis"
-    require_relative "redis/evented_redis"
-    PubSubAdapter::Redis.new
+
+    PubSubAdapter::Redis.new(url)
   end
 end

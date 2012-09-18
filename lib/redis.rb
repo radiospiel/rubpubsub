@@ -1,10 +1,16 @@
+require "uri"
 require "redis"
+require_relative "redis/evented_redis"
+
 
 class PubSubAdapter::Redis
-  def initialize
+  def initialize(url)
     @subscriptions_by_channel = Hash.new { |hash, key| hash[key] = [] }
-    @subscriber = EventedRedis.connect
-    @publisher = Redis.new
+
+    uri = URI.parse(url)
+
+    @subscriber = ::EventedRedis.connect(host: uri.host, port: uri.port, password: uri.password)
+    @publisher = ::Redis.new(host: uri.host, port: uri.port, password: uri.password)
   end
 
   # The Subscription object.
