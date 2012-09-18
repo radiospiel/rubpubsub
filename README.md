@@ -5,6 +5,12 @@
   git clone rubpubsub
   bundle install
   foreman start
+
+## Deploy on heroku
+
+  heroku apps:create
+  heroku addons:add redistogo:nano
+  git push heroku master
   
 ## Server Side Events, no Websockets.
 

@@ -7,7 +7,8 @@ require_relative "lib/pub_sub_adapter"
 
 require 'eventmachine'
 EM.next_tick do
-  $pubsub = PubSubAdapter.redis
+  url = ENV["REDISTOGO_URL"] || "redis://localhost:6379/"
+  $pubsub = PubSubAdapter.redis(url)
 end
 
 get '/' do
