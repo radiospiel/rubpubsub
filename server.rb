@@ -1,6 +1,7 @@
 require 'sinatra'
 
 set server: 'thin', connections: []
+set port: ENV["PORT"] || 4567
 
 require_relative "lib/pub_sub_adapter"
 
@@ -8,7 +9,6 @@ require 'eventmachine'
 EM.next_tick do
   $pubsub = PubSubAdapter.redis
 end
-
 
 get '/' do
   halt erb(:login) unless params[:user]
