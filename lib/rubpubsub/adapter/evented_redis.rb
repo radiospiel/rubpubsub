@@ -6,35 +6,46 @@ require 'eventmachine'
 # See https://gist.github.com/352068
 #
 # Support for AUTH command added by @radiospiel 
-#
 class EventedRedis < EM::Connection
+  #
+  # Connect to a redis server. Supported options:
+  #
+  # - <b>:host</b>
+  # - <b>:port</b>
+  # - <b>:password</b>
   def self.connect(options)
     EM.connect options[:host], options[:port], self do |evented_redis|
       evented_redis.auth options[:password]
     end
   end
   
-  def post_init
-    @blocks = {}
-  end
-  
+  # The Redis AUTH command
   def auth(password)
     call_command('auth', password) if password
   end
   
+  # The Redis SUBSCRIBE command
   def subscribe(*channels, &blk)
     channels.each { |c| @blocks[c.to_s] = blk }
     call_command('subscribe', *channels)
   end
   
+  # The Redis PUBLISH command
   def publish(channel, msg)
     call_command('publish', channel, msg)
   end
   
+  # The Redis UNSUBSCRIBE command
   def unsubscribe
     call_command('unsubscribe')
   end
   
+  private
+  
+  def post_init
+    @blocks = {}
+  end
+    
   def receive_data(data)
     buffer = StringIO.new(data)
     begin
@@ -46,7 +57,6 @@ class EventedRedis < EM::Connection
     end while !buffer.eof?
   end
   
-  private
   def read_response(buffer)
     type = buffer.read(1)
     case type

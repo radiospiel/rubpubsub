@@ -3,14 +3,26 @@ require 'expectation'
 require 'eventmachine'
 require "uri"
 
+# The RubPubSub class implements a ServerSideEvents-based pubsub
+# rack application. Mount it at a given mount point a la: 
+# 
+#   run Rack::URLMap.new({
+#     "/rubpubsub"  => RubPubSub.new(:adapter => "redis://localhost:6379/"), 
+#     "/"           => Chat.new
+#   })
 class RubPubSub < Sinatra::Base
   attr :adapter
-  
+
+  # Build the RubPubSub object.
+  #
+  # Options:
+  # - <b>:adapter</b> the URL for the pubsub middleware adapter; see 
+  #   RubPubSub::Adapter.create
   def initialize(options = {})
     expect! options => { :adapter => String }
 
     EM.next_tick do
-      @adapter = RubPubSub::Adapter.load(options[:adapter])
+      @adapter = RubPubSub::Adapter.create(options[:adapter])
     end
     
     super

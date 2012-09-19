@@ -2,8 +2,10 @@ require "uri"
 require "redis"
 require_relative "evented_redis"
 
+# The Redis adapter for RubPubSub
 class RubPubSub::Adapter::Redis
-  def initialize(url)
+  
+  def initialize(url) #:nodoc:
     @subscriptions_by_channel = Hash.new { |hash, key| hash[key] = [] }
 
     uri = URI.parse(url)
@@ -13,7 +15,7 @@ class RubPubSub::Adapter::Redis
   end
 
   # The Subscription object.
-  class Subscription
+  class Subscription #:nodoc:
     extend Forwardable
     delegate :call => :"@block"
     
@@ -37,11 +39,13 @@ class RubPubSub::Adapter::Redis
       end
     end
   end
-
+  
+  # Publish a message to a channel
   def publish(channel, message)
     @publisher.publish channel, message
   end
   
+  # Unsubscribe a subscription.
   def unsubscribe(subscription)
     #
     # Remove subscription from all stored subscriptions.

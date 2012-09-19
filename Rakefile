@@ -10,3 +10,7 @@ end
 Bundler::GemHelper.install_tasks
 
 task :default => [:test, :rdoc]
+
+task :rdoc do
+  sh "rdoc -o rdoc lib"
+end
