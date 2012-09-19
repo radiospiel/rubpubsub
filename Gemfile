@@ -1,11 +1,10 @@
-source :rubygems
+source "http://rubygems.org"
 
-gem 'eventmachine'
-gem 'sinatra'
-gem 'redis'
-gem 'thin'
-gem 'expectation'
+gem "rb-fsevent"
+gem "thin"
+gem "sinatra"
+gem "expectation"
 
-group :development, :test do
-  gem 'radiowatchr'
+group :redis do
+  gem "redis"
 end

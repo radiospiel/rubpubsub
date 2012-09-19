@@ -1,5 +1,7 @@
-# The PubSubAdapter class is here mainly for documentation purposes.
-class PubSubAdapter
+require "uri"
+
+# The RubPubSub::Adapter class is here mainly for documentation purposes.
+class RubPubSub::Adapter
   #
   # Subscribe to one or more channels. Whenever a message is
   # published in one of the channels the block is called with
@@ -21,15 +23,21 @@ class PubSubAdapter
   end
   
   #
-  # Publish a message in a channel
+  # Publish a message in a channel.
   def publish(channel, message)
   end
 end
 
-class PubSubAdapter
+class RubPubSub::Adapter
   def self.redis(url)
-    require_relative "pub_sub_adapter/redis"
+    require_relative "adapter/redis"
 
-    PubSubAdapter::Redis.new(url)
+    RubPubSub::Adapter::Redis.new(url)
+  end
+  
+  def self.load(url)
+    expect! URI.parse(url).scheme => "redis"
+    
+    self.redis(url)
   end
 end

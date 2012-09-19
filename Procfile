@@ -1,1 +1,1 @@
-web: bundle exec ruby rubpubsub.rb
+web: bundle exec rackup -p $PORT chat.ru

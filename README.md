@@ -1,10 +1,11 @@
-# rubpubsub: A rack based HTTP-speaking pubsub server.
+# rubpubsub: A sinatra based HTTP-speaking async pubsub server backed by redis.
 
-## Getting started
+## Run the chat example.
 
     git clone rubpubsub
     bundle install
-    foreman start
+    rackup -c chat.ru
+    # or: foreman start
 
 ## Deploy on heroku
 

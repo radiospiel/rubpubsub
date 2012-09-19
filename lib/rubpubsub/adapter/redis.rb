@@ -2,7 +2,7 @@ require "uri"
 require "redis"
 require_relative "evented_redis"
 
-class PubSubAdapter::Redis
+class RubPubSub::Adapter::Redis
   def initialize(url)
     @subscriptions_by_channel = Hash.new { |hash, key| hash[key] = [] }
 
