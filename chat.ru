@@ -8,8 +8,10 @@ require "rubpubsub"
 require "#{File.dirname(__FILE__)}/example/chat"
 
 adapter = ENV["REDISTOGO_URL"] || "redis://localhost:6379/"
+rubpubsub = RubPubSub.new(:adapter => adapter)
 
 run Rack::URLMap.new({
-  "/rubpubsub"  => RubPubSub.new(:adapter => adapter), 
-  "/"           => Chat.new(:rubpubsub => "/rubpubsub")
+  "/pub"  => rubpubsub.publisher,
+  "/sub"  => rubpubsub.subscriber,
+  "/"     => Chat.new(:rubpubsub => rubpubsub)
 })

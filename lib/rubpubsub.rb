@@ -10,9 +10,12 @@ require "uri"
 #     "/rubpubsub"  => RubPubSub.new(:adapter => "redis://localhost:6379/"), 
 #     "/"           => Chat.new
 #   })
-class RubPubSub < Sinatra::Base
+class RubPubSub
   attr :adapter
 
+  extend Forwardable
+  delegate [:subscribe, :publish, :unsubscribe] => :adapter
+  
   # Build the RubPubSub object.
   #
   # Options:
@@ -21,39 +24,24 @@ class RubPubSub < Sinatra::Base
   def initialize(options = {})
     expect! options => { :adapter => String }
 
+    adapter_url = options[:adapter]
+
     EM.next_tick do
-      @adapter = RubPubSub::Adapter.create(options[:adapter])
+      @adapter = RubPubSub::Adapter.create(adapter_url)
     end
-    
-    super
   end
   
-  get '/subscribe', provides: 'text/event-stream' do
-    stream :keep_open do |out|
-      timer = EventMachine::PeriodicTimer.new(28) do
-        out << "event: keepalive\ndata: \n\n"
-      end
-
-      subscription = adapter.subscribe params[:user], "chat" do |channel, data|
-        lines = data.split(/(\r\n|\r|\n)/)
-        lines[0] = "channel: #{channel} #{lines[0]}"
-        lines = lines.map { |line| "data: #{line}" }
-        out << lines.join("\n") << "\n\n"
-      end
-
-      out.callback do
-        timer.cancel
-        adapter.unsubscribe(subscription)
-      end
-    end
+  # returns the publisher rack app
+  def publisher
+    @publisher ||= Publisher.new(self)
   end
 
-  post '/publish' do
-    channel = params[:channel] || "chat"
-    adapter.publish channel, msg
-
-    204 # response without entity body
+  # returns the subscriber rack app
+  def subscriber
+    @subscriber ||= Subscriber.new(self)
   end
 end
 
 require_relative "rubpubsub/adapter"
+require_relative "rubpubsub/publisher"
+require_relative "rubpubsub/subscriber"

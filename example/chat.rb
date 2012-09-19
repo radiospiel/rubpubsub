@@ -5,18 +5,18 @@ class Chat < Sinatra::Base
   enable :inline_templates
   
   def initialize(options = {})
-    expect! options => { :rubpubsub => /[^\/]$/ } # rubpubsub path not ending in "/"
+    expect! options => { 
+      :rubpubsub => [RubPubSub, nil]
+    }
 
-    @rubpubsub_path = options[:rubpubsub]
+    @rubpubsub = options[:rubpubsub]
     super
   end
 
-  def rubpubsub_path
-    @rubpubsub_path || "rubpubsub_path"
-  end
-  
   get '/' do
     halt erb(:login) unless params[:user]
+    
+    @rubpubsub.publish "chat", "Welcome #{params[:user]}"
     erb :chat, locals: { user: params[:user].gsub(/\W/, '') }
   end
 end
@@ -45,7 +45,7 @@ __END__
 
 <script>
   // reading
-  var es = new EventSource('<%= rubpubsub_path %>/subscribe?user=<%= user %>');
+  var es = new EventSource('/sub?user=<%= user %>');
   es.onmessage = function(e) { $('#chat').append(e.data + "\n"); };
   es.addEventListener('keepalive', function(e) {
     $('#chat').append("."); 
@@ -53,7 +53,7 @@ __END__
 
   // writing
   $("form").live("submit", function(e) {
-    $.post('<%= rubpubsub_path %>/publish', {msg: "<%= user %>: " + $('#msg').val()});
+    $.post('/pub', {msg: "<%= user %>: " + $('#msg').val()});
     $('#msg').val(''); $('#msg').focus();
     e.preventDefault();
   });
