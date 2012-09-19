@@ -18,8 +18,10 @@ class RubPubSub::Publisher < Sinatra::Base
   end
   
   post '/' do
-    channel = params[:channel] || "chat"
-    @rubpubsub.publish channel, params[:msg]
+    channels = params[:channels] || []
+    channels.each do |channel|
+      @rubpubsub.publish channel, params[:msg]
+    end
 
     204 # response without entity body
   end

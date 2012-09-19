@@ -39,7 +39,7 @@ class RubPubSub::Subscriber < Sinatra::Base
       stream :keep_open do |out|
         timer = reschedule_keepalive(timer, out)
 
-        subscription = @rubpubsub.subscribe params[:user], "chat" do |channel, data|
+        subscription = @rubpubsub.subscribe(*channels) do |channel, data|
           lines = data.split(/(\r\n|\r|\n)/)
           lines[0] = "channel: #{channel} #{lines[0]}"
           lines = lines.map { |line| "data: #{line}" }
@@ -59,6 +59,7 @@ class RubPubSub::Subscriber < Sinatra::Base
   end
   
   get '/', provides: 'text/event-stream' do
-    subscribe params[:user], "chat"
+    channels = params[:channels].split(",")
+    subscribe *channels
   end
 end

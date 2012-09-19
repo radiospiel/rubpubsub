@@ -36,24 +36,39 @@ __END__
 @@ login
 <form action='/'>
   <label for='user'>User Name:</label>
-  <input name='user' value='' />
+  <input name='user' value='' id='user'/>
   <input type='submit' value="GO!" />
 </form>
 
 @@ chat
+<h1>This is a chat</h1>
 <pre id='chat'></pre>
 
-<script>
-  // reading
-  var es = new EventSource('/sub?user=<%= user %>');
+<script type="text/javascript" charset="utf-8">
+  var user = '<%= user %>';
+  var url = '/sub?channels=chat,' + user;
+  var es = new EventSource(url);
   es.onmessage = function(e) { $('#chat').append(e.data + "\n"); };
-  es.addEventListener('keepalive', function(e) {
-    $('#chat').append("."); 
-  }, false);
+
+  function publish(msg) {
+    // Find channels from the message. A message that mentions 
+    // other users via "@" gets sent only to those.
+    var channels = [];
+    var handles = msg.match(/@([a-z]+)/g);
+    if(handles) {
+      for(var i=0; i < handles.length; ++i)
+        channels.push(handles[i].substr(1));
+    }
+    if(channels.length == 0) 
+      channels.push("chat");
+
+    $.post('/pub', {channels: channels, msg: user + ": " + msg});
+  }
 
   // writing
   $("form").live("submit", function(e) {
-    $.post('/pub', {msg: "<%= user %>: " + $('#msg').val()});
+    publish($('#msg').val());
+    
     $('#msg').val(''); $('#msg').focus();
     e.preventDefault();
   });
