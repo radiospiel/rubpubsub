@@ -11,7 +11,12 @@ require "uri"
 #     "/"           => Chat.new
 #   })
 class RubPubSub
-  attr :adapter
+
+  # The adapter.
+  #
+  # The adapter object gets set up during initialization, and adheres 
+  # to the RubPubSub::Adapter interface.
+  attr_reader :adapter
 
   extend Forwardable
   delegate [:subscribe, :publish, :unsubscribe] => :adapter
@@ -19,7 +24,7 @@ class RubPubSub
   # Build the RubPubSub object.
   #
   # Options:
-  # - <b>:adapter</b> the URL for the pubsub middleware adapter; see 
+  # - <tt>:adapter</tt> the URL for the pubsub middleware adapter; see 
   #   RubPubSub::Adapter.create
   def initialize(options = {})
     expect! options => { :adapter => String }
@@ -31,12 +36,12 @@ class RubPubSub
     end
   end
   
-  # returns the publisher rack app
+  # returns the publisher rack app. See Publisher.
   def publisher
     @publisher ||= Publisher.new(self)
   end
 
-  # returns the subscriber rack app
+  # returns the subscriber rack app. See Subscriber. 
   def subscriber
     @subscriber ||= Subscriber.new(self)
   end

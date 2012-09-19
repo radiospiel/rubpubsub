@@ -1,5 +1,18 @@
+#
+# The RubPubSub subscriber rack app.
+#
+# This rack app is intended to be mounted via Rack::URLMap, a la
+# 
+#     rubpubsub = RubPubSub.new(:adapter => adapter)
+#     
+#     run Rack::URLMap.new({
+#       "/pub"  => rubpubsub.publisher,
+#       "/sub"  => rubpubsub.subscriber,
+#       ...
+#     })
+#
 class RubPubSub::Subscriber < Sinatra::Base
-  def initialize(rubpubsub)
+  def initialize(rubpubsub) #:nodoc:
     @rubpubsub = rubpubsub
     super
   end

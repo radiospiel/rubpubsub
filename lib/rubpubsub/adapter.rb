@@ -12,18 +12,18 @@ class RubPubSub::Adapter
   #   end
   #
   # The subscribe method returns an identifier which is later used
-  # to unsubscribe these subscription. This message must not block.
+  # to unsubscribe these subscription. <b>This method must not block.</b>
   def subscribe(*channels, &block)
   end
 
   #
   # Unsubscribe a subscription. The subscription must be an object 
-  # returned from subscribe. This message may block.
+  # returned from subscribe. <b>This method may block.</b>
   def unsubscribe(subscription)
   end
   
   #
-  # Publish a message in a channel. This message may block.
+  # Publish a message in a channel. <b>This method may block.</b>
   def publish(channel, message)
   end
 end
@@ -39,7 +39,7 @@ class RubPubSub::Adapter
   #
   # Currently the only supported URL schema is 
   #
-  #   redis://[user:password@]host:port/
+  # <tt>redis://[user:password@]host:port/</tt>
   #
   def self.create(url)
     expect! URI.parse(url).scheme => "redis"
