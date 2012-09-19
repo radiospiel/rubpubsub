@@ -42,14 +42,34 @@ __END__
 
 @@ chat
 <h1>This is a chat</h1>
-<pre id='chat'></pre>
 
+<pre id='chat'> </pre>
+
+<form>
+  <input id='msg' placeholder='type message here...' />
+</form>
+
+<pre id='log'> </pre>
+<style type="text/css" media="screen">
+  #log .error { color: red; }
+  #log .info { color: green; }
+</style>
 <script type="text/javascript" charset="utf-8">
   var user = '<%= user %>';
+
+  var log = {
+    info:     function(msg) { log.message(msg, "info"); },
+    error:    function(msg) { log.message(msg, "error"); },
+    message:  function(msg, klass) {
+      $("<div class='" + klass + "'></div>").text(msg).appendTo('#log');
+    }
+  };
+
   var url = '/sub?channels=chat,' + user;
   var es = new EventSource(url);
-  es.onmessage = function(e) { $('#chat').append(e.data + "\n"); };
-
+  es.onmessage = function(e) { $("<div></div>").text(e.data).appendTo('#chat'); };
+  es.onerror = function(e)   { log.error("EventSource error"); }
+  
   function publish(msg) {
     // Find channels from the message. A message that mentions 
     // other users via "@" gets sent only to those.
@@ -62,7 +82,9 @@ __END__
     if(channels.length == 0) 
       channels.push("chat");
 
-    $.post('/pub', {channels: channels, msg: user + ": " + msg});
+    $.post('/pub', { channels: channels, msg: user + ": " + msg })
+      .success(function() { log.info("posted message"); })
+      .error(function(e) { log.error("Cannot post message"); });
   }
 
   // writing
@@ -74,6 +96,3 @@ __END__
   });
 </script>
 
-<form>
-  <input id='msg' placeholder='type message here...' />
-</form>
