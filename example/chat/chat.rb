@@ -1,5 +1,7 @@
 #
-# Use chat.ru to load the Chat example.
+# Use "rackup" to load the Chat example.
+
+require "json"
 
 class Chat < Sinatra::Base
   enable :inline_templates
@@ -55,8 +57,7 @@ __END__
   #log .info { color: green; }
 </style>
 <script type="text/javascript" charset="utf-8">
-  var user = '<%= user %>';
-
+(function(user) {
   var log = {
     info:     function(msg) { log.message(msg, "info"); },
     error:    function(msg) { log.message(msg, "error"); },
@@ -101,5 +102,6 @@ __END__
     $('#msg').val(''); $('#msg').focus();
     e.preventDefault();
   });
+})(<%= user.to_json %>);
 </script>
 
