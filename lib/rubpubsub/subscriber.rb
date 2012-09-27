@@ -42,10 +42,8 @@ class RubPubSub::App
     end
   end
   
-  get '/', provides: 'text/event-stream' do
+  get '/:channel?', provides: 'text/event-stream' do
     raise Sinatra::NotFound unless subscriber?
-    
-    channels = params[:channels].split(",")
     subscribe *channels
   end
 end

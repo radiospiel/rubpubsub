@@ -27,6 +27,22 @@ class RubPubSub::App < Sinatra::Base
   
   def publisher?; @publisher; end
   def subscriber?; @subscriber; end
+
+  helpers do
+    def channels
+      case channels = params[:channels]
+      when Array  then :nop
+      when String then channels = channels.split(",")
+      else        channels = []
+      end
+      
+      if (channel = params[:channel]) && channel != ""
+        channels << channel
+      end
+      
+      channels
+    end
+  end
 end
 
 require_relative "publisher"

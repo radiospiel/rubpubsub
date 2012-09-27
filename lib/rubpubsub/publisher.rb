@@ -1,10 +1,9 @@
 # The publisher part of the RubPubSub::App
 
 class RubPubSub::App
-  post '/' do
+  post '/:channel?' do
     raise Sinatra::NotFound unless publisher?
     
-    channels = params[:channels] || []
     channels.each do |channel|
       @rubpubsub.publish channel, params[:msg]
     end
