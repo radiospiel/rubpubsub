@@ -29,21 +29,23 @@ class RubPubSub::Adapter
 end
 
 class RubPubSub::Adapter
-  def self.redis(url) #:nodoc:
-    require_relative "adapter/redis"
-
-    RubPubSub::Adapter::Redis.new(url)
-  end
-
+  SUPPORTED_SCHEMES = %w(redis)
+  
   # Create a RubPubSub::Adapter.
   #
   # Currently the only supported URL schema is 
   #
   # <tt>redis://[user:password@]host:port/</tt>
   #
+  # There is no support yet to choose a redis database or a namespace.
   def self.create(url)
-    expect! URI.parse(url).scheme => "redis"
+    expect! URI.parse(url).scheme => SUPPORTED_SCHEMES
     
-    self.redis(url)
+    send URI.parse(url).scheme, url
+  end
+  
+  def self.redis(url) #:nodoc:
+    require_relative "adapter/redis"
+    RubPubSub::Adapter::Redis.new(url)
   end
 end

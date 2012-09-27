@@ -35,18 +35,14 @@ class RubPubSub
       @adapter = RubPubSub::Adapter.create(adapter_url)
     end
   end
-  
-  # returns the publisher rack app. See Publisher.
-  def publisher
-    @publisher ||= Publisher.new(self)
+
+  def app(mode = :any)
+    App.new(self, mode)
   end
 
-  # returns the subscriber rack app. See Subscriber. 
-  def subscriber
-    @subscriber ||= Subscriber.new(self)
-  end
+  def publisher; app(:publisher); end
+  def subscriber; app(:subscriber); end
 end
 
 require_relative "rubpubsub/adapter"
-require_relative "rubpubsub/publisher"
-require_relative "rubpubsub/subscriber"
+require_relative "rubpubsub/app"

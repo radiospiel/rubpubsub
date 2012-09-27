@@ -1,22 +1,6 @@
-#
-# The RubPubSub subscriber rack app.
-#
-# This rack app is intended to be mounted via Rack::URLMap, a la
-# 
-#     rubpubsub = RubPubSub.new(:adapter => adapter)
-#     
-#     run Rack::URLMap.new({
-#       "/pub"  => rubpubsub.publisher,
-#       "/sub"  => rubpubsub.subscriber,
-#       ...
-#     })
-#
-class RubPubSub::Subscriber < Sinatra::Base
-  def initialize(rubpubsub) #:nodoc:
-    @rubpubsub = rubpubsub
-    super
-  end
-  
+# The subscriber part of the RubPubSub::App
+
+class RubPubSub::App
   helpers do
     def reschedule_keepalive(timer, out)
       if timer
@@ -39,7 +23,7 @@ class RubPubSub::Subscriber < Sinatra::Base
       stream :keep_open do |out|
         timer = reschedule_keepalive(timer, out)
 
-        subscription = @rubpubsub.subscribe(*channels) do |channel, data|
+        subscription = rubpubsub.subscribe(*channels) do |channel, data|
           lines = data.split(/(\r\n|\r|\n)/)
           lines[0] = "channel: #{channel} #{lines[0]}"
           lines = lines.map { |line| "data: #{line}" }
@@ -52,13 +36,15 @@ class RubPubSub::Subscriber < Sinatra::Base
 
         out.callback do
           timer.cancel
-          @rubpubsub.unsubscribe(subscription)
+          rubpubsub.unsubscribe(subscription)
         end
       end
     end
   end
   
   get '/', provides: 'text/event-stream' do
+    raise Sinatra::NotFound unless subscriber?
+    
     channels = params[:channels].split(",")
     subscribe *channels
   end
