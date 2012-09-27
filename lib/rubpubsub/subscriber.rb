@@ -25,8 +25,8 @@ class RubPubSub::App
 
         subscription = rubpubsub.subscribe(*channels) do |channel, data|
           lines = data.split(/(\r\n|\r|\n)/)
-          lines[0] = "channel: #{channel} #{lines[0]}"
           lines = lines.map { |line| "data: #{line}" }
+          lines.unshift "event: #{channel}"
           out << lines.join("\n") << "\n\n"
 
           # We just wrote some output, and therefore can reschedule the 
