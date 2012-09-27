@@ -66,9 +66,16 @@ __END__
   };
 
   var url = '/sub?channels=chat,' + user;
+
   var es = new EventSource(url);
-  es.onmessage = function(e) { $("<div></div>").text(e.data).appendTo('#chat'); };
-  es.onerror = function(e)   { log.error("EventSource error"); }
+  es.onerror = function(e)   { log.error("EventSource error"); };
+
+    var log_event = function(event) {
+      $("<div></div>").text(event.data).appendTo('#chat'); 
+    };
+
+    es.addEventListener(user, log_event);
+    es.addEventListener('chat', log_event);
   
   function publish(msg) {
     // Find channels from the message. A message that mentions 
