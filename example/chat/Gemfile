@@ -1,0 +1,7 @@
+source "http://rubygems.org"
+
+gem "thin"
+gem "sinatra"
+gem "expectation"
+gem "redis"
+gem "json"
