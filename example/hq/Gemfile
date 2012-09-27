@@ -1,0 +1,12 @@
+source "http://rubygems.org"
+
+gem "thin"
+gem "sinatra"
+gem "expectation"
+gem "redis"
+gem "thor"
+gem "bundler"
+
+group :development do
+  gem "rdoc"
+end

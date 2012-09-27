@@ -1,0 +1,72 @@
+#!/usr/bin/env ruby
+# Send a command to a client
+
+require "bundler/setup"
+
+require "thor"
+require "rack"
+require "net/http"
+require_relative "lib/ui"
+
+class CommandLine < Thor
+  desc "server", "Start server"
+  method_options :port => :integer
+  def server
+    $: << File.join(File.dirname(__FILE__), "..", "..", "lib")
+    require "rubpubsub"
+
+    adapter = ENV["REDISTOGO_URL"] || "redis://localhost:6379/"
+    rubpubsub = RubPubSub.new(:adapter => adapter)
+
+    Rack::Server.start :app => rubpubsub.app,
+      :environment => :deployment,
+      :server => 'thin',
+      :Port => options[:port] || 9292
+  end
+
+  desc "listen CHANNEL", "Listen to HQ server for commands"
+  method_option :url, :default => "http://localhost:9292"
+
+  def listen(channel)
+    uri = self.uri(channel)
+    W "#{uri}: connecting"
+
+    Net::HTTP.start(uri.host, uri.port) do |http|
+      request = Net::HTTP::Get.new uri.request_uri
+
+      http.request request do |response|
+        response.read_body do |chunk|
+          W chunk
+        end
+      end
+    end
+  end
+  
+  desc "push CHANNEL cmd", "push a command to a client"
+  method_option :url, :default => "http://localhost:9292"
+
+  def push(channel, *args)
+    uri = self.uri(channel)
+    response = Net::HTTP.post_form uri, msg: args.join(" ")
+    body = response.read_body
+    W "body", body
+    W "status", response.code, response.message
+  end
+
+  protected
+  
+  def uri(channel)
+    url = File.join(options[:url], channel)
+    URI.parse(url)
+  end
+end
+
+begin
+  CommandLine.start
+rescue ArgumentError
+  STDERR.puts $!
+  exit 1
+rescue StandardError
+  STDERR.puts $!
+  exit 2
+end
