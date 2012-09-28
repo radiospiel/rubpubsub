@@ -27,6 +27,18 @@ module CommandLine
   
   def parse
     return if @options
+  
+    parse_options
+    
+    if options[:verbose]
+      UI.verbosity = 3 
+    end
+    if options[:quiet]
+      UI.verbosity = 0 
+    end
+  end
+  
+  def parse_options
 
     @options = Trollop::options do
        version "hq (c) 2012 radiospiel"
@@ -48,6 +60,9 @@ EOS
       opt :url,  "Set server url", :default => "http://localhost:9999"
       opt :port, "Set server port", :default => 9999
       opt :id,   "Include message id in output", :default => true
+      opt :verbose, "Be more verbose", :default => false
+      opt :quiet, "Be quiet", :default => false
+      
       stop_on SUBCOMMANDS
     end
 

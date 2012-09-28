@@ -2,6 +2,12 @@
 # require "thor/shell"
 
 module UI
+  extend self
+  
+  attr :verbosity, true
+  
+  self.verbosity = 1
+  
   COLORS = {
     clear:      "\e[0m",  # Embed in a String to clear all previous ANSI sequences.
     bold:       "\e[1m",  # The start of an ANSI bold sequence.
@@ -24,8 +30,6 @@ module UI
     on_white:   "\e[47m"  # Set the terminal's background ANSI color to white.
   }
 
-  extend self
-  
   @@started_at = Time.now
   
   MESSAGE_COLOR = {
@@ -34,7 +38,18 @@ module UI
     :error    => :red,
     :success  => :green,
   }
+  
+  MIN_VERBOSITY = {
+    :debug    => 3,
+    :info     => 2,
+    :warn     => 1,
+    :error    => 0,
+    :success  => 0
+  }
+  
   def method_missing(sym, msg, *args)
+    return unless verbosity >= MIN_VERBOSITY[sym] 
+
     unless args.empty?
       msg += ": " + args.map(&:inspect).join(", ")
     end
