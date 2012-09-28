@@ -68,7 +68,6 @@ end
 
 def S(*args)
   UI.success *args
-  exit 1
 end
 
 def B(msg, *args, &block)
