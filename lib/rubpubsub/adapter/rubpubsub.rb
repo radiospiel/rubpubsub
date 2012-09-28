@@ -9,8 +9,22 @@ class RubPubSub::Adapter::RubPubSub
     @url = url
   end
 
-  # subscribe to a channel. Returns a Subscription object.
   def subscribe(channel, &block)
+    retrying do
+      do_subscribe channel, &block
+    end
+  end
+  
+  def publish(channel, message)
+    retrying do
+      do_publish channel, message
+    end
+  end
+  
+  private
+  
+  # subscribe to a channel. Returns a Subscription object.
+  def do_subscribe(channel, &block)
     W "#{url}: connecting"
 
     url = File.join(@url, channel)
@@ -52,76 +66,30 @@ class RubPubSub::Adapter::RubPubSub
   end
   
   # Publish a message to a channel
-  def publish(channel, message)
+  def do_publish(channel, message)
     url = File.join(@url, channel)
     response = Net::HTTP.post_form URI(url), msg: message
     body = response.read_body
     body.split("\n", 2).first
   end
   
-  # Unsubscribe a subscription.
-  def unsubscribe(subscription)
-    #
-    # Remove subscription from all stored subscriptions.
-    subscription.channels.each do |channel|
-      @subscriptions_by_channel[channel].reject! do |stored_subscription|
-        stored_subscription.object_id == subscription.object_id
-      end
-    end
+  # retry the block on connection errors.
+  def retrying(options = {}, &block)
+    sleep = options[:sleep] || 0.1
+    repeat = options[:repeat] || 8
 
-    #
-    # Remove empty channels from subscriptions_by_channel. This is
-    # important as this removes the Subscription objects from memory
-    # which gives the VM a chance to clean up the stored blocks
-    # and their bindings.
-    #
-    empty_channels = @subscriptions_by_channel.
-      select { |channel, subscriptions| subscriptions.empty? }.
-      map(&:first)
-    
-    empty_channels.
-      each { |channel| @subscriptions_by_channel.delete channel }
+    while true do
+      begin
+        return yield
+      rescue Errno::ECONNREFUSED
+        if repeat == 0
+          E "[#{CommandLine.url}] Cannot connect, giving up."
+        end
 
-    #
-    # Note that we do not resubscribe, even if there are have less channels
-    # than before. Instead wait for the next subscription to resubscribe.
-  end
+        repeat -= 1
+        sleep *= 1.5
 
-  private
-  
-  # returns an array of names of subscribed channels.
-  def subscribed_channels
-    @subscriptions_by_channel.keys
-  end
-  
-  # yield to the block, and resubscribe, if there are any new
-  # subscribed channels
-  def resubscribe_if_needed(&block)
-    initially_subscribed_channels = subscribed_channels.dup
-
-    yield
-  ensure
-    return if (subscribed_channels - initially_subscribed_channels).empty?
-    resubscribe
-  end
-
-  # re-subscribe @subscriber
-  def resubscribe
-    @subscriber.unsubscribe
-    
-    @subscriber.subscribe(*subscribed_channels) do |message, channel, data|
-      case message
-      when "subscribe"
-        # nop
-      when "unsubscribe"
-        # nop
-      when "message"
-        subscriptions = @subscriptions_by_channel[channel]
-
-        message, id = RubPubSub::MessageID.unpack_message_and_id(data)
-        subscriptions.each { |subscription| subscription.call(channel, message, id) }
-      else
-        STDERR.puts "Don't know how to handle #{message.inspect}"
+        Thread.send :sleep, sleep
       end
     end
   end
