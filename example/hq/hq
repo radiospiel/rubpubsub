@@ -2,10 +2,12 @@
 require_relative "lib/ui"
 require_relative "lib/commandline"
 
+$: << File.join(File.dirname(__FILE__), "..", "..", "lib")
+require "rubpubsub/adapter"
+
 case CommandLine.command
 when "server"
   begin
-    $: << File.join(File.dirname(__FILE__), "..", "..", "lib")
     require "bundler/setup"
     require "rubpubsub"
 
@@ -21,33 +23,28 @@ when "server"
 when "listen"
   begin
     channel = ARGV.shift || Trollop.die("Missing channel parameter")
-    uri = CommandLine.uri(channel)
 
-    require "net/http"
-    W "#{uri}: connecting"
-
-    Net::HTTP.start(uri.host, uri.port) do |http|
-      request = Net::HTTP::Get.new uri.request_uri
-
-      http.request request do |response|
-        response.read_body do |chunk|
-          W chunk
-        end
-      end
+    adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+    adapter.subscribe channel do |event, data, id|
+      puts "# message-id: #{id}"
+      puts data
     end
   end
   
-when "push"
+when "publish"
   begin
     channel = ARGV.shift || Trollop.die("Missing channel parameter")
     Trollop.die("Missing message") unless ARGV.first
-    uri = CommandLine.uri(channel)
 
-    require "net/http"
-    B "pushing message to #{uri}" do
-      response = Net::HTTP.post_form uri, msg: ARGV.join(" ")
-      body = response.read_body
-      W "#{response.code} #{response.message}", body
+    # read data; if there is a single "-" argument read from stdin
+    msg = ARGV.join(" ")
+    msg = STDIN.read if msg == "-"
+
+    # Push the message.
+    id = B "#{channel}: pushing message" do
+      adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+      adapter.publish channel, msg
     end
+    S "published message", id
   end
 end

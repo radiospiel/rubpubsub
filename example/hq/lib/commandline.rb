@@ -13,14 +13,17 @@ module CommandLine
 
   def uri(channel)
     require "uri"
+    URI.parse url(channel)
+  end
 
-    url = File.join(options[:url], channel)
-    URI.parse(url)
+  def url(channel=nil)
+    return options[:url] unless channel
+    File.join(options[:url], channel)
   end
   
   private
   
-  SUBCOMMANDS = %w(server listen push)
+  SUBCOMMANDS = %w(server listen publish)
   
   def parse
     return if @options

@@ -1,5 +1,7 @@
 require "uri"
 
+class RubPubSub; end
+
 # The RubPubSub::Adapter class is here mainly for documentation purposes.
 class RubPubSub::Adapter
   #
@@ -30,7 +32,7 @@ class RubPubSub::Adapter
 end
 
 class RubPubSub::Adapter
-  SUPPORTED_SCHEMES = %w(redis)
+  SUPPORTED_SCHEMES = %w(redis rubpubsub)
   
   # Create a RubPubSub::Adapter.
   #
@@ -43,6 +45,11 @@ class RubPubSub::Adapter
     expect! URI.parse(url).scheme => SUPPORTED_SCHEMES
     
     send URI.parse(url).scheme, url
+  end
+
+  def self.rubpubsub(url) #:nodoc:
+    require_relative "adapter/rubpubsub"
+    ::RubPubSub::Adapter::RubPubSub.new(url)
   end
   
   def self.redis(url) #:nodoc:
