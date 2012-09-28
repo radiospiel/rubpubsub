@@ -23,10 +23,11 @@ class RubPubSub::App
       stream :keep_open do |out|
         timer = reschedule_keepalive(timer, out)
 
-        subscription = rubpubsub.subscribe(*channels) do |channel, data|
+        subscription = rubpubsub.subscribe(*channels) do |channel, data, id|
           lines = data.split(/(\r\n|\r|\n)/)
           lines = lines.map { |line| "data: #{line}" }
           lines.unshift "event: #{channel}"
+          lines.unshift "id: #{id}"
           out << lines.join("\n") << "\n\n"
 
           # We just wrote some output, and therefore can reschedule the 

@@ -42,7 +42,9 @@ class RubPubSub::Adapter::Redis
   
   # Publish a message to a channel
   def publish(channel, message)
+    message, id = RubPubSub::MessageID.pack_message_and_id(message)
     @publisher.publish channel, message
+    id
   end
   
   # Unsubscribe a subscription.
@@ -103,7 +105,9 @@ class RubPubSub::Adapter::Redis
         # nop
       when "message"
         subscriptions = @subscriptions_by_channel[channel]
-        subscriptions.each { |subscription| subscription.call(channel, data) }
+
+        message, id = RubPubSub::MessageID.unpack_message_and_id(data)
+        subscriptions.each { |subscription| subscription.call(channel, message, id) }
       else
         STDERR.puts "Don't know how to handle #{message.inspect}"
       end

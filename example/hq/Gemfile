@@ -4,6 +4,7 @@ gem "thin"
 gem "sinatra"
 gem "expectation"
 gem "redis"
+gem "uuid"
 gem "bundler"
 gem "trollop"
 

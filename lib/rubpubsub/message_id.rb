@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 module RubPubSub::MessageID
+=======
+module Rubpubsub::MessageID
+>>>>>>> messageids
   extend self
   
   def pack_message_and_id(msg)
