@@ -21,6 +21,9 @@ class RubPubSub::App
     
     def subscribe(*channels)
       stream :keep_open do |out|
+        # say hello; some clients want this.
+        out << " \n";
+        
         timer = reschedule_keepalive(timer, out)
 
         subscription = rubpubsub.subscribe(*channels) do |channel, data, id|

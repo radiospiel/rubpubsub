@@ -9,9 +9,9 @@ class RubPubSub::Adapter::RubPubSub
     @url = url
   end
 
-  def subscribe(channel, &block)
+  def blocking_subscribe(channel, options = {}, &block)
     retrying do
-      do_subscribe channel, &block
+      do_subscribe channel, options, &block
     end
   end
   
@@ -24,9 +24,13 @@ class RubPubSub::Adapter::RubPubSub
   private
   
   # subscribe to a channel. Returns a Subscription object.
-  def do_subscribe(channel, &block)
+  def do_subscribe(channel, options = {}, &block)
     W "#{url}: connecting"
-
+    said_hello = true
+    if options[:hello]
+      said_hello = false
+    end
+    
     url = File.join(@url, channel)
     uri = URI(url)
     Net::HTTP.start(uri.host, uri.port) do |http|
@@ -43,6 +47,11 @@ class RubPubSub::Adapter::RubPubSub
         end
         
         response.read_body do |chunk|
+          unless said_hello
+            yield :subscribed, nil, nil
+            said_hello = true
+          end
+          
           # The String#split limit parameter: 
           #
           # "... If negative, there is no limit to the number of fields
