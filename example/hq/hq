@@ -1,18 +1,12 @@
 #!/usr/bin/env ruby
-# Send a command to a client
-
-require "bundler/setup"
-
-require "thor"
-require "rack"
-require "net/http"
 require_relative "lib/ui"
+require_relative "lib/commandline"
 
-class CommandLine < Thor
-  desc "server", "Start server"
-  method_options :port => :integer
-  def server
+case CommandLine.command
+when "server"
+  begin
     $: << File.join(File.dirname(__FILE__), "..", "..", "lib")
+    require "bundler/setup"
     require "rubpubsub"
 
     adapter = ENV["REDISTOGO_URL"] || "redis://localhost:6379/"
@@ -21,14 +15,15 @@ class CommandLine < Thor
     Rack::Server.start :app => rubpubsub.app,
       :environment => :deployment,
       :server => 'thin',
-      :Port => options[:port] || 9292
+      :Port => CommandLine.options[:port]
   end
 
-  desc "listen CHANNEL", "Listen to HQ server for commands"
-  method_option :url, :default => "http://localhost:9292"
+when "listen"
+  begin
+    channel = ARGV.shift || Trollop.die("Missing channel parameter")
+    uri = CommandLine.uri(channel)
 
-  def listen(channel)
-    uri = self.uri(channel)
+    require "net/http"
     W "#{uri}: connecting"
 
     Net::HTTP.start(uri.host, uri.port) do |http|
@@ -42,31 +37,17 @@ class CommandLine < Thor
     end
   end
   
-  desc "push CHANNEL cmd", "push a command to a client"
-  method_option :url, :default => "http://localhost:9292"
+when "push"
+  begin
+    channel = ARGV.shift || Trollop.die("Missing channel parameter")
+    Trollop.die("Missing message") unless ARGV.first
+    uri = CommandLine.uri(channel)
 
-  def push(channel, *args)
-    uri = self.uri(channel)
-    response = Net::HTTP.post_form uri, msg: args.join(" ")
-    body = response.read_body
-    W "body", body
-    W "status", response.code, response.message
+    require "net/http"
+    B "pushing message to #{uri}" do
+      response = Net::HTTP.post_form uri, msg: ARGV.join(" ")
+      body = response.read_body
+      W "#{response.code} #{response.message}", body
+    end
   end
-
-  protected
-  
-  def uri(channel)
-    url = File.join(options[:url], channel)
-    URI.parse(url)
-  end
-end
-
-begin
-  CommandLine.start
-rescue ArgumentError
-  STDERR.puts $!
-  exit 1
-rescue StandardError
-  STDERR.puts $!
-  exit 2
 end

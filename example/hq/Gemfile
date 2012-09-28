@@ -4,8 +4,8 @@ gem "thin"
 gem "sinatra"
 gem "expectation"
 gem "redis"
-gem "thor"
 gem "bundler"
+gem "trollop"
 
 group :development do
   gem "rdoc"
