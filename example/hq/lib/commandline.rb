@@ -23,7 +23,7 @@ module CommandLine
   
   private
   
-  SUBCOMMANDS = %w(server listen publish)
+  SUBCOMMANDS = %w(server publish subscribe slave run)
   
   def parse
     return if @options
@@ -35,17 +35,19 @@ The hq rubpubsub example application.
 
 Usage:
 
-  hg [ <options> ]  server
-  hg [ <options> ]  pub channel command
-  hg [ <options> ]  sub channel
+  hg [ <options> ] server
+  hg [ <options> ] publish channel message
+  hg [ <options> ] subscribe channel
+  hg [ <options> ] slave channel
+  hg [ <options> ] run channel
 
 where [options] are:
 
 EOS
 
-      opt :url, "Set server url", :type => String, :default => "http://localhost:9999"
-      opt :port, "Set server port", :type => Integer, :default => 9999
-
+      opt :url,  "Set server url", :default => "http://localhost:9999"
+      opt :port, "Set server port", :default => 9999
+      opt :id,   "Include message id in output", :default => true
       stop_on SUBCOMMANDS
     end
 

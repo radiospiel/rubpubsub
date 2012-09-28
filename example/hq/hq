@@ -1,4 +1,22 @@
 #!/usr/bin/env ruby
+# *hq* is a server and client to run commands remotely. Commands are 
+# fetched from a server, where another client publishes these into
+# a specific channel.
+#
+# This is a proof-of-concept implementation. A realworld implementation
+# will be done natively.
+#
+# hg server                    ... start a server
+# hg publish channel message   ... publish a message on a channel
+# hg subscribe channel         ... subscribe to a channel
+# hg slave channel             ... listen to a channel, execute commands, and 
+#                                  return results through back channel.
+# hg run channel command       ... run a command remotely on a slave listening 
+#                                  to that channel.
+#
+# For more information see hg --help
+#
+
 require_relative "lib/ui"
 require_relative "lib/commandline"
 
@@ -20,13 +38,13 @@ when "server"
       :Port => CommandLine.options[:port]
   end
 
-when "listen"
+when "subscribe"
   begin
     channel = ARGV.shift || Trollop.die("Missing channel parameter")
 
     adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
-    adapter.subscribe channel do |event, data, id|
-      puts "# message-id: #{id}"
+    adapter.blocking_subscribe channel do |event, data, id|
+      puts "# message-id: #{id}" if CommandLine.options[:id]
       puts data
     end
   end
@@ -46,5 +64,80 @@ when "publish"
       adapter.publish channel, msg
     end
     S "published message", id
+  end
+
+when "slave"
+  channel = ARGV.shift || Trollop.die("Missing channel parameter")
+  adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+
+  while true do
+    command = nil
+    adapter.blocking_subscribe channel do |event, data, id|
+      command = data
+      I "Executing #{command}"
+      begin
+        result = `#{command}`
+        status = $?.exitstatus == 0 ? "0 OK" : "#{$?.exitstatus} ERROR"
+      rescue StandardError
+        status = "126 #{$!}"
+      end
+      adapter.publish "#{channel}.back", "#{status}\n#{result}"
+    end
+  end
+  
+when "run"
+  begin
+    require 'thread'
+    channel = ARGV.shift || Trollop.die("Missing channel parameter")
+
+    # read command; if there is a single "-" argument read from stdin
+    command = ARGV.join(" ")
+
+    mutex = Mutex.new
+    cv = ConditionVariable.new
+
+    listener = Thread.new do
+      mutex.lock
+      
+      adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+      adapter.blocking_subscribe "#{channel}.back", :hello => true do |event, data, id|
+        if event == :subscribed
+          W "subscriber started."
+          
+          cv.signal
+          mutex.unlock rescue nil
+          next
+        end
+        
+        status, output = data.split("\n", 2)
+        I status
+        exitstatus = status.split(" ")[0].to_i
+        
+        puts output
+        exit exitstatus
+        break
+      end
+    end
+
+    mutex.synchronize { 
+      cv.wait(mutex) 
+    }
+
+    W "pushing command."
+
+    # The above code is not ideal. We would either want the subscribe call
+    # to work asynchronously, but the current implementation blocks.
+    
+    Timeout.timeout 3 do
+      # Push the command.
+      id = B "#{channel}: pushing message" do
+        adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+        adapter.publish channel, command
+      end
+
+      listener.join
+    end
+  rescue StandardError
+    E "#{$!}"
   end
 end
