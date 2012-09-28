@@ -1,0 +1,69 @@
+%option always-interactive
+
+%{
+
+#include <unistd.h>
+#include <string.h>
+#include <stdlib.h>
+
+struct {
+    char* id;
+    char* event;
+    char* data;
+} msg = {0,0,0};
+
+static void resize(char** ptr, size_t size)
+{
+    if(!*ptr) 
+        *ptr = malloc(size);
+    else
+        *ptr = realloc(*ptr, size);
+}
+
+static void set(char** pTarget, const char* s)
+{
+    if(isspace(*s)) s++; 
+
+    resize(pTarget, strlen(s) + 1);
+    strcpy(*pTarget, s);
+}
+
+static void add(char** pTarget, const char* s)
+{
+    if(isspace(*s)) s++; 
+    
+    if(*pTarget) {
+        *pTarget = realloc(*pTarget, strlen(*pTarget) + strlen(s) + 1 + 1);
+    }
+    else {
+        *pTarget = strdup(s);
+    }
+
+    strcat(*pTarget, "\n");
+    strcat(*pTarget, s);
+}
+
+static void flush()
+{
+    if(!msg.data) return;
+    printf("%s", msg.data);
+}
+
+%}
+
+%%
+
+id:.*           set(&msg.id, yytext + 3);
+                
+event:.*        set(&msg.event, yytext + 6);
+
+data:.*         add(&msg.data, yytext + 5);
+
+.*              {
+                    flush();
+                }
+                
+\n              { flush(); }
+
+%%
+
