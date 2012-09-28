@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 module RubPubSub::MessageID
-=======
-module Rubpubsub::MessageID
->>>>>>> messageids
   extend self
   
   def pack_message_and_id(msg)
@@ -13,8 +9,8 @@ module Rubpubsub::MessageID
   def unpack_message_and_id(msg)
     expect! msg => /:/
     
-    msg =~ /(.*):(.*)/
-    [ $2, $1 ]
+    id, msg = msg.split(":", 2)
+    [ msg, id ]
   end
   
   private

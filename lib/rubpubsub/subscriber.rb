@@ -24,7 +24,7 @@ class RubPubSub::App
         timer = reschedule_keepalive(timer, out)
 
         subscription = rubpubsub.subscribe(*channels) do |channel, data, id|
-          lines = data.split(/(\r\n|\r|\n)/)
+          lines = data.split(/(\r\n|\r|\n)/, -1)
           lines = lines.map { |line| "data: #{line}" }
           lines.unshift "event: #{channel}"
           lines.unshift "id: #{id}"
