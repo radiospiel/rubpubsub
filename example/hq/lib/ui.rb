@@ -49,9 +49,11 @@ module UI
   end
 end
 
-#UI = {} #Bundler::UI::Shell.new(Thor::Shell::Color.new)
-
 def D(*args)
+  UI.debug *args
+end
+
+def I(*args)
   UI.info *args
 end
 
@@ -64,17 +66,15 @@ def E(*args)
   exit 1
 end
 
-def B(msg, *args, &block)
-  UI.warn msg, *args
+def S(*args)
+  UI.success *args
+  exit 1
+end
 
+def B(msg, *args, &block)
   start = Time.now
   yield.tap do
     msg += ": #{(1000 * (Time.now - start)).to_i} msecs."
     UI.warn msg, *args
   end
 end
-
-# # Success!
-# def S(*args)
-#   UI.confirm UI.format_log_message(*args)
-# end
