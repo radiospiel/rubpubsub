@@ -5,6 +5,7 @@ gem "sinatra"
 gem "expectation"
 gem "redis"
 gem "thor"
+gem "uuid"
 gem "bundler"
 
 group :development do

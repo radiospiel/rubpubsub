@@ -23,7 +23,8 @@ class RubPubSub::Adapter
   end
   
   #
-  # Publish a message in a channel. <b>This method may block.</b>
+  # Publish a message in a channel. Returns a message id.
+  # <b>This method may block.</b>
   def publish(channel, message)
   end
 end
