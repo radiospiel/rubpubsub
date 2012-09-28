@@ -24,14 +24,10 @@ class RubPubSub::App
         timer = reschedule_keepalive(timer, out)
 
         subscription = rubpubsub.subscribe(*channels) do |channel, data, id|
-          lines = data.split(/(\r\n|\r|\n)/, -1)
-          lines = lines.map { |line| "data: #{line}" }
-          lines.unshift "event: #{channel}"
-          lines.unshift "id: #{id}"
-          out << lines.join("\n") << "\n\n"
+          data = data.gsub(/(\r\n|\r|\n)/, "\ndata: ")
+          out << "event: #{channel}\nid: #{id}\ndata: #{data}\n\n"
 
-          # We just wrote some output, and therefore can reschedule the 
-          # keepalive timer.
+          # We just wrote some output, so we can reschedule the keepalive timer.
           timer = reschedule_keepalive(timer, out)
         end
 
