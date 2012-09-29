@@ -30,7 +30,7 @@ __END__
   <head> 
     <title>Super Simple Chat with Sinatra</title> 
     <meta charset="utf-8" />
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script> 
+    <script src="/js/jquery.min.js"></script> 
   </head> 
   <body><%= yield %></body>
 </html>
