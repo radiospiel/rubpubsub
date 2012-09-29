@@ -1,3 +1,5 @@
+Dir.chdir File.dirname(__FILE__)
+
 require "bundler/setup"
 Bundler.setup :redis
 require "rack"
