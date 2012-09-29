@@ -1,10 +1,8 @@
 source "http://rubygems.org"
 
 gem "thin"
+gem "uuid"
 gem "sinatra"
 gem "expectation"
 gem "redis"
-
-group :development do
-  gem "rdoc"
-end
+gem "json"
