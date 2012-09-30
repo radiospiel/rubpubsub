@@ -1,6 +1,9 @@
 # rubpubsub: a HTTP-protocol on top of redis pubsub or whatever
 
-rubpubsub implements a HTTP API on top of a pubsub middleware. It pushes messages to clients using **Server Sent Events**, instead of, e.g. Websockets.
+rubpubsub implements a HTTP API on top of a pubsub middleware. It pushes messages 
+to clients using **Server Sent Events**, instead of, e.g. Websockets.
+
+Note: For Licensing see the part on Licensing, below.
 
 ## Quick starts
 
@@ -119,3 +122,15 @@ passing on event type and id as parameters and the event payload on STDIN.
     curl -N -s -S http://localhost:9999/abc | ./unsse received-event %event% %id%
 
 Note the use of the `-N` curl parameter, which puts curl into unbuffered mode.
+
+## Licensing
+
+Files in this distribution - unless listed below - are (c) 2011, 2012, Enrico Thierbach,
+and distributed under the terms of the modified BSD license, see LICENSE.BSD
+
+Exceptions:
+
+- jquery.min.js: (in example/chat) see http://jquery.org/license
+- trollop.rb: (in example/hq) (c) 2007 William Morgan, distributed under "the same terms as ruby itself"
+- evented_redis.rb (part of the rubpubsub redis adapter) is (c) Pieter Noordhuis; 
+  see https://gist.github.com/352068.
