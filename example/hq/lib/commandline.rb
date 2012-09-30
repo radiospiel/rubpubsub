@@ -53,6 +53,17 @@ Usage:
   hg [ <options> ] slave channel
   hg [ <options> ] run channel
 
+How to interact with curl clients:
+
+  # start server
+  ./hg server
+  
+  # listen to "abc" channel", see unsse tool.
+  curl -N -s -S http://localhost:9999/abc | ./unsse received-event %event% %id%
+
+  # post file to "abc" channel.
+  cat file | curl --data-binary @- http://localhost:9999/abc
+ 
 where [options] are:
 
 EOS
@@ -70,7 +81,7 @@ EOS
 
     unless SUBCOMMANDS.include?(@command)
       if @command
-        Trollop.die "Unknown subcommand #{@subcommand.inspect}"
+        Trollop.die "Unknown subcommand #{@command.inspect}"
       else 
         Trollop.die "Missing subcommand"
       end
