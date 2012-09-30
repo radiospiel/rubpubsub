@@ -1,5 +1,6 @@
 require "uri"
 require "redis"
+require "uuid"
 require_relative "evented_redis"
 
 # The Redis adapter for RubPubSub
@@ -39,11 +40,13 @@ class RubPubSub::Adapter::Redis
       end
     end
   end
+
+  @@uuid ||= UUID.new
   
   # Publish a message to a channel
-  def publish(channel, message)
-    message, id = RubPubSub::MessageID.pack_message_and_id(message)
-    @publisher.publish channel, message
+  def publish(channel, message, options = {})
+    id = options[:id] || @@uuid.generate
+    @publisher.publish channel, pack_message_and_id(message, id)
     id
   end
   
@@ -106,11 +109,22 @@ class RubPubSub::Adapter::Redis
       when "message"
         subscriptions = @subscriptions_by_channel[channel]
 
-        message, id = RubPubSub::MessageID.unpack_message_and_id(data)
+        message, id = unpack_message_and_id(data)
         subscriptions.each { |subscription| subscription.call(channel, message, id) }
       else
         STDERR.puts "Don't know how to handle #{message.inspect}"
       end
     end
+  end
+  
+  def pack_message_and_id(msg, id)
+    "#{id}:#{msg}"
+  end
+
+  def unpack_message_and_id(msg)
+    expect! msg => /:/
+    
+    id, msg = msg.split(":", 2)
+    [ msg, id ]
   end
 end

@@ -46,4 +46,3 @@ end
 
 require_relative "rubpubsub/adapter"
 require_relative "rubpubsub/app"
-require_relative "rubpubsub/message_id"

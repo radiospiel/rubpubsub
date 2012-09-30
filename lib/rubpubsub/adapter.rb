@@ -25,9 +25,24 @@ class RubPubSub::Adapter
   end
   
   #
-  # Publish a message in a channel. Returns a message id.
-  # <b>This method may block.</b>
-  def publish(channel, message)
+  # Publishes a message in a channel. Returns a message id. 
+  #
+  # Parameters:
+  #
+  # - +channel+: the channel name
+  # - +message+: the message body
+  # - +options+: optional options
+  #
+  # Supported options:
+  #
+  # - +:id+ a unique message id. 
+  #
+  # Notes:
+  #
+  # When not passing in the message id, this method generates one.
+  #
+  # Returns the message id.
+  def publish(channel, message, options = {})
   end
 end
 
