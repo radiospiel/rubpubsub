@@ -1,6 +1,10 @@
+# This file is part of the rubpubsub ruby gem.
+#
+# Copyright (c) 2011, 2012, Enrico Thierbach,
+# Distributed under the terms of the modified BSD license, see LICENSE.BSD
+
 #
 # Use "rackup" to load the Chat example.
-
 require "json"
 
 class Chat < Sinatra::Base
@@ -66,9 +70,18 @@ __END__
     }
   };
 
-  var url = '/sub?channels=chat,' + user;
+  function publish(msg, channels) {
+    var url = channels.length == 1 ? '/pub/' + channels[0] :
+      '/pub/?channels=' + channels.join(",");
+    
+    $.post(url, msg)
+      .success(function() { log.info("posted message"); })
+      .error(function(e) { log.error("cannot post message"); });
+  }
 
-  var es = new EventSource(url);
+  var subscription_url = '/sub?channels=chat,' + user;
+
+  var es = new EventSource(subscription_url);
   es.onerror = function(e)   { log.error("EventSource error"); };
 
     var log_event = function(event) {
@@ -78,7 +91,7 @@ __END__
     es.addEventListener(user, log_event);
     es.addEventListener('chat', log_event);
   
-  function publish(msg) {
+  function publish_chat_message(msg) {
     // Find channels from the message. A message that mentions 
     // other users via "@" gets sent only to those.
     var channels = [];
@@ -87,17 +100,13 @@ __END__
       for(var i=0; i < handles.length; ++i)
         channels.push(handles[i].substr(1));
     }
-    if(channels.length == 0) 
-      channels.push("chat");
 
-    $.post('/pub', { channels: channels, msg: user + ": " + msg })
-      .success(function() { log.info("posted message"); })
-      .error(function(e) { log.error("Cannot post message"); });
+    publish(user + ": " + msg, channels.length == 0 ? [ "chat" ] : channels);
   }
-
+  
   // writing
   $("form").live("submit", function(e) {
-    publish($('#msg').val());
+    publish_chat_message($('#msg').val());
     
     $('#msg').val(''); $('#msg').focus();
     e.preventDefault();
