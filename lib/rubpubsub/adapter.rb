@@ -62,11 +62,6 @@ class RubPubSub::Adapter
     send URI.parse(url).scheme, url
   end
 
-  def self.rubpubsub(url) #:nodoc:
-    require_relative "adapter/rubpubsub"
-    ::RubPubSub::Adapter::RubPubSub.new(url)
-  end
-  
   def self.redis(url) #:nodoc:
     require_relative "adapter/redis"
     RubPubSub::Adapter::Redis.new(url)

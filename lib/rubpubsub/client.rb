@@ -1,15 +1,17 @@
 require "uri"
 require "net/http"
 
-# The Redis adapter for RubPubSub
-class RubPubSub::Adapter::RubPubSub
+class RubPubSub; end
+
+# A standalone HTTP client for RubPubSub servers.
+class RubPubSub::Client
   attr :url
   
   def initialize(url) #:nodoc:
     @url = url
   end
 
-  def blocking_subscribe(channel, options = {}, &block)
+  def subscribe(channel, options = {}, &block)
     retrying do
       do_subscribe channel, options, &block
     end
@@ -77,7 +79,9 @@ class RubPubSub::Adapter::RubPubSub
   # Publish a message to a channel
   def do_publish(channel, message)
     url = File.join(@url, channel)
-    response = Net::HTTP.post_form URI(url), msg: message
+    uri = URI(url)
+    http = Net::HTTP.start(uri.host, uri.port)
+    response = http.post uri.path, message
     body = response.read_body
     body.split("\n", 2).first
   end

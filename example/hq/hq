@@ -21,7 +21,7 @@ require_relative "lib/ui"
 require_relative "lib/commandline"
 
 $: << File.join(File.dirname(__FILE__), "..", "..", "lib")
-require "rubpubsub/adapter"
+require "rubpubsub/client"
 
 case CommandLine.command
 when "server"
@@ -42,8 +42,8 @@ when "subscribe"
   begin
     channel = ARGV.shift || Trollop.die("Missing channel parameter")
 
-    adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
-    adapter.blocking_subscribe channel do |event, data, id|
+    client = RubPubSub::Client.new CommandLine.url
+    client.subscribe channel do |event, data, id|
       puts "# message-id: #{id}" if CommandLine.options[:id]
       puts data
     end
@@ -60,19 +60,20 @@ when "publish"
 
     # Push the message.
     id = B "#{channel}: pushing message" do
-      adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
-      adapter.publish channel, msg
+      client = RubPubSub::Client.new CommandLine.url
+      client.publish channel, msg
     end
     S "published message", id
   end
 
 when "slave"
   channel = ARGV.shift || Trollop.die("Missing channel parameter")
-  adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
+
+  client = RubPubSub::Client.new CommandLine.url
 
   while true do
     command = nil
-    adapter.blocking_subscribe channel do |event, data, id|
+    adapter.subscribe channel do |event, data, id|
       command = data
       I "Executing #{command}"
       begin
@@ -81,7 +82,7 @@ when "slave"
       rescue StandardError
         status = "126 #{$!}"
       end
-      adapter.publish "#{channel}.back", "#{status}\n#{result}"
+      client.publish "#{channel}.back", "#{status}\n#{result}"
     end
   end
   
@@ -99,8 +100,8 @@ when "run"
     listener = Thread.new do
       mutex.lock
       
-      adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
-      adapter.blocking_subscribe "#{channel}.back", :hello => true do |event, data, id|
+      client = RubPubSub::Client.new CommandLine.url
+      client.subscribe "#{channel}.back", :hello => true do |event, data, id|
         if event == :subscribed
           W "subscriber started."
           
@@ -131,8 +132,8 @@ when "run"
     Timeout.timeout 3 do
       # Push the command.
       id = B "#{channel}: pushing message" do
-        adapter = RubPubSub::Adapter.rubpubsub CommandLine.url
-        adapter.publish channel, command
+        client = RubPubSub::Client.new CommandLine.url
+        client.publish channel, command
       end
 
       listener.join
