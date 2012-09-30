@@ -7,8 +7,11 @@ class RubPubSub::App
   post '/:channel?' do
     raise Sinatra::NotFound unless publisher?
 
+    msg = request.body.read
+    id = params[:id]
+
     message_ids = channels.map do |channel|
-      @rubpubsub.publish channel, params[:msg]
+      @rubpubsub.publish channel, msg, :id => id
     end
 
     # 204 # response without entity body
