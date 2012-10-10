@@ -114,39 +114,42 @@ static unsigned command_ofs = 0;
 #define READ 0
 #define WRITE 1
 
+static void die(const char* msg) {
+  perror(msg); exit(1);
+}
+
+static int write_all(int fd, const void* data, unsigned dataLen) {
+  int len = 0;
+  while(len < dataLen) {
+    int written = write(fd, data, dataLen);
+    if(written < 0)
+      return -1;
+      
+    data += written;
+    dataLen -= written;
+    len += written;
+  }
+  
+  return len;
+}
+
 static void onEvent(const char* event, const char* id, const char* data)
 {
+  // prepare command.
   command[command_ofs] = (char*)event;
   command[command_ofs+1] = (char*)id;
+
+  // Prepare pipe for subprocess
+  int fd[2];
+  if (pipe(fd) != 0) die("pipe");
   
+  // Start subprocess
   pid_t pid = fork();
-  if (pid == -1) { 
-    perror("fork");
-    exit(1);
-  }
+  if (pid == -1) die("fork");
   
-  int p_stdin[2];
-  if (pipe(p_stdin) != 0) {
-    perror("pipe");
-    exit(1);
-  }
-  
-  if (pid == 0) {
-    /* code for child */
-
-    close(p_stdin[WRITE]);
-    dup2(p_stdin[READ], READ);
-
-    {
-      fprintf(stderr, "Running");
-
-      const char** c = command;
-      while(*c) {
-        fprintf(stderr, " %s", *c);
-        c++;
-      }
-      fprintf(stderr, "\n");
-    }
+  if (pid == 0) { /* the child */
+    close(fd[WRITE]);
+    dup2(fd[READ], READ);
 
     execvp(command[0], command);
     perror(command[0]);
@@ -154,22 +157,20 @@ static void onEvent(const char* event, const char* id, const char* data)
     _exit(1);  /* the execvp() failed - a failed child should not flush parent files */
   }
   else { /* code for parent */ 
-    fprintf(stderr, "pid of latest child is %d\n", pid);
-    
-    write(p_stdin[WRITE], data, strlen(data));
-    close(p_stdin[WRITE]);
+    close(fd[READ]);
 
-    fprintf(stderr, "wrote to child\n");
+    write_all(fd[WRITE], data, strlen(data));
+    write_all(fd[WRITE], "\n", 1);
+    close(fd[WRITE]);
     
     int status = 0;
     waitpid(pid, &status, 0);
     
-    if(WIFEXITED(status)) {
+    // Show results if something broke.
+    if(WIFEXITED(status) && WEXITSTATUS(status) != 0)
       fprintf(stderr, "child exited with stats %d\n", WEXITSTATUS(status));
-    }
-    else if(WIFSIGNALED(status)) {
-      fprintf(stderr, "child exited because of signal %d\n", WTERMSIG(status));
-    }
+    else if(WIFSIGNALED(status))
+      fprintf(stderr, "child exited of signal %d\n", WTERMSIG(status));
   }
 }
 
