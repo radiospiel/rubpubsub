@@ -3,14 +3,15 @@ all: clean test
 test: sse-client dog
 	./sse-client http://localhost:4567/sub/chat ./dog
 
-sse-client: unsse.c
+sse-client: sse-client.c
 	gcc -o $@ $< -Wall
 
-unsse.c: unsse.fl
-	flex -I -o $@ unsse.fl
+sse-client.c: sse-client.fl
+	flex -I -o $@ $<
 
 dog: dog.c
 	gcc -o $@ $< -Wall
 
 clean: 
-	rm -f unsse.c unsse
+	rm -f sse-client dog
+
