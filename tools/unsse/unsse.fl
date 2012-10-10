@@ -46,7 +46,7 @@ static void do_add(char** pBuf, const char* string)
 
 #define add(name, ptr) do { do_add(&buf.name, ptr); msg.name = buf.name; } while(0)
 
-// static void onEvent(const char* event, const char* id, const char* data);
+static void onEvent(const char* event, const char* id, const char* data);
 
 static void flush()
 {
@@ -61,7 +61,8 @@ static void flush()
     printf("id '%s'\n", msg.id);
     printf("data '%s'\n", msg.data);
     
-    msg.data = msg.event = msg.id = NULL;
+    onEvent(msg.event, msg.id, msg.data);
+    msg.event = msg.id = msg.data = NULL;
 }
         
 %}
@@ -106,8 +107,73 @@ static void help() {
  *
  * and the data part will be written to process_events STDIN.
  */
-static const char** command = NULL;
+static char** command = NULL;
 static unsigned command_ofs = 0;
+
+/*
+ * process the event.
+ */
+#define READ 0
+#define WRITE 1
+
+static void onEvent(const char* event, const char* id, const char* data)
+{
+  command[command_ofs] = (char*)event;
+  command[command_ofs+1] = (char*)id;
+  
+  pid_t pid = fork();
+  if (pid == -1) { 
+    perror("fork");
+    exit(1);
+  }
+  
+  int p_stdin[2];
+  if (pipe(p_stdin) != 0) {
+    perror("pipe");
+    exit(1);
+  }
+  
+  if (pid == 0) {
+    /* code for child */
+
+    close(p_stdin[WRITE]);
+    dup2(p_stdin[READ], READ);
+
+    {
+      fprintf(stderr, "Running");
+
+      const char** c = command;
+      while(*c) {
+        fprintf(stderr, " %s", *c);
+        c++;
+      }
+      fprintf(stderr, "\n");
+    }
+
+    execvp(command[0], command);
+    perror(command[0]);
+    
+    _exit(1);  /* the execvp() failed - a failed child should not flush parent files */
+  }
+  else { /* code for parent */ 
+    fprintf(stderr, "pid of latest child is %d\n", pid);
+    
+    write(p_stdin[WRITE], data, strlen(data));
+    close(p_stdin[WRITE]);
+
+    fprintf(stderr, "wrote to child\n");
+    
+    int status = 0;
+    waitpid(pid, &status, 0);
+    
+    if(WIFEXITED(status)) {
+      fprintf(stderr, "child exited with stats %d\n", WEXITSTATUS(status));
+    }
+    else if(WIFSIGNALED(status)) {
+      fprintf(stderr, "child exited because of signal %d\n", WTERMSIG(status));
+    }
+  }
+}
 
 int main(int argc, const char** argv) 
 {
@@ -128,7 +194,7 @@ int main(int argc, const char** argv)
   
   if(*argv) {
     /* Keep space for event, id, and data */
-    command = malloc((argc + 4) * sizeof(const char*));
+    command = calloc(argc + 4, sizeof(const char*));
     
     command_ofs = 0;
     while(*argv) {
