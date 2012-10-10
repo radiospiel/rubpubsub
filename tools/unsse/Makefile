@@ -1,13 +1,12 @@
 all: clean test
 
 test: unsse
-	curl -N -s -S http://localhost:9999/abc | ./unsse
+	./unsse
 
 unsse: unsse.c
-	gcc -o $@ $< -lfl
+	gcc -o $@ $< -Wall
 
 unsse.c: unsse.fl
-	# flex -7 -o $@ unsse.fl
 	flex -I -o $@ unsse.fl
 
 clean: 

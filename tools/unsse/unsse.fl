@@ -5,65 +5,92 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 struct {
-    char* id;
-    char* event;
-    char* data;
+  char* id;
+  char* event;
+  char* data;
+} buf = {0,0,0};
+
+struct {
+  const char* id;
+  const char* event;
+  const char* data;
 } msg = {0,0,0};
 
-static void resize(char** ptr, size_t size)
+/*
+ * skip the first character in string, if there is one;
+ * then replace the string in \a *pTarget with this string;
+ * return a pointer to the string.
+ */ 
+static void do_set(char** pBuf, const char* string)
 {
-    if(!*ptr) 
-        *ptr = malloc(size);
-    else
-        *ptr = realloc(*ptr, size);
+    *pBuf = realloc(*pBuf, strlen(string) + 1);
+    strcpy(*pBuf, string);
 }
 
-static void set(char** pTarget, const char* s)
+static void do_add(char** pBuf, const char* string)
 {
-    if(isspace(*s)) s++; 
-
-    resize(pTarget, strlen(s) + 1);
-    strcpy(*pTarget, s);
+  if(!*pBuf) {
+    do_set(pBuf, string);
+  } 
+  else {
+    *pBuf = realloc(*pBuf, strlen(*pBuf) + strlen(string) + 1);
+    strcat(*pBuf, "\n");
+    strcat(*pBuf, string);
+  }
 }
 
-static void add(char** pTarget, const char* s)
-{
-    if(isspace(*s)) s++; 
-    
-    if(*pTarget) {
-        *pTarget = realloc(*pTarget, strlen(*pTarget) + strlen(s) + 1 + 1);
-    }
-    else {
-        *pTarget = strdup(s);
-    }
+#define set(name, ptr) do { do_set(&buf.name, ptr); msg.name = buf.name; } while(0)
 
-    strcat(*pTarget, "\n");
-    strcat(*pTarget, s);
-}
+#define add(name, ptr) do { do_add(&buf.name, ptr); msg.name = buf.name; } while(0)
 
 static void flush()
 {
     if(!msg.data) return;
-    printf("%s", msg.data);
+    
+    if(!msg.event)
+      msg.event = "event";
+    if(!msg.id)
+      msg.id = "id";
+    
+    printf("event '%s'\n", msg.event);
+    printf("id '%s'\n", msg.id);
+    printf("data '%s'\n", msg.data);
+    
+    msg.data = msg.event = msg.id = NULL;
 }
 
 %}
 
 %%
 
-id:.*           set(&msg.id, yytext + 3);
-                
-event:.*        set(&msg.event, yytext + 6);
+id:\ .*         set(id, yytext + 4);
+id:.*           set(id, yytext + 3);
+event:\ .*      set(event, yytext + 7);
+event:.*        set(event, yytext + 6);
+data:\ .*       add(data, yytext + 6);
+data:.*         add(data, yytext + 5);
 
-data:.*         add(&msg.data, yytext + 5);
-
-.*              {
-                    flush();
-                }
-                
+.*              { flush(); }
 \n              { flush(); }
 
 %%
 
+int main() 
+{
+  (void) yyunput;
+
+  FILE* in = popen("curl -N -s -S http://localhost:4567/sub/abc", "r");
+  yyin = in;
+  setlinebuf(yyin);
+
+  while(yylex());
+  
+  return 0;
+}
+
+int yywrap() { 
+  return 1; 
+}
