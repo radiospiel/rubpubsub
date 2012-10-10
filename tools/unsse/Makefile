@@ -1,9 +1,9 @@
 all: clean test
 
-test: unsse
-	./unsse
+test: sse-client
+	./sse-client http://localhost:4567/sub/chat echo
 
-unsse: unsse.c
+sse-client: unsse.c
 	gcc -o $@ $< -Wall
 
 unsse.c: unsse.fl

@@ -46,6 +46,8 @@ static void do_add(char** pBuf, const char* string)
 
 #define add(name, ptr) do { do_add(&buf.name, ptr); msg.name = buf.name; } while(0)
 
+// static void onEvent(const char* event, const char* id, const char* data);
+
 static void flush()
 {
     if(!msg.data) return;
@@ -61,7 +63,7 @@ static void flush()
     
     msg.data = msg.event = msg.id = NULL;
 }
-
+        
 %}
 
 %%
@@ -78,19 +80,82 @@ data:.*         add(data, yytext + 5);
 
 %%
 
-int main() 
+#define HELP "sse-client connects to an URL, expects a server sent event stream, and runs a command on each event.\n\n" \
+  "  sse-client URL command [ <option1> [ <option2> ... ] ]\n\n" \
+  "The command to be called will receive event type and id as additional parameters; e.g. as\n\n" \
+  "  command option1 option2 event id\n\n" \
+  "and will receive data input on STDIN."
+
+static void help() {
+  fprintf(stderr, "sse-client, compiled %s %s.\n\n", __DATE__, __TIME__);
+  fprintf(stderr, "%s\n", HELP);
+
+  exit(1);
+}
+
+/* 
+ * The command and command_ofs parameter keep the command to call.
+ * This process will receive the event and id parameters as arguments;
+ * i.e. when you run
+ *
+ *   unsse http://localhost:12567/abc process_events
+ *
+ * the process_events command will be called with parameters
+ *
+ *   process_events event id
+ *
+ * and the data part will be written to process_events STDIN.
+ */
+static const char** command = NULL;
+static unsigned command_ofs = 0;
+
+int main(int argc, const char** argv) 
 {
-  (void) yyunput;
-
-  FILE* in = popen("curl -N -s -S http://localhost:4567/sub/abc", "r");
-  yyin = in;
-  setlinebuf(yyin);
-
-  while(yylex());
+  (void)yyunput; // Suppress warning about unused symbol
   
+  const char* url = NULL;
+  
+  argv++; argc--;
+  
+  /* == process url ================================================ */
+
+  if(*argv) {
+    url = *argv++;
+    argc--;
+  }
+
+  /* == process command ============================================ */
+  
+  if(*argv) {
+    /* Keep space for event, id, and data */
+    command = malloc((argc + 4) * sizeof(const char*));
+    
+    command_ofs = 0;
+    while(*argv) {
+      command[command_ofs++] = strdup(*argv++);
+      argc--;
+    }
+  }
+
+  /* == help needed? =============================================== */
+  
+  if(!command)
+    help();
+    
+  char* curl = 0;
+  asprintf(&curl, "curl -N -s -S %s", url);
+
+  fprintf(stderr, "running %s\n", curl);
+  
+  yyin = popen(curl, "r");
+  setlinebuf(yyin);
+  
+  while(yylex());
+
   return 0;
 }
 
 int yywrap() { 
   return 1; 
 }
+
