@@ -57,14 +57,12 @@ static void flush()
     if(!msg.id)
       msg.id = "id";
     
-    printf("event '%s'\n", msg.event);
-    printf("id '%s'\n", msg.id);
-    printf("data '%s'\n", msg.data);
-    
     onEvent(msg.event, msg.id, msg.data);
+
     msg.event = msg.id = msg.data = NULL;
+    buf.event = buf.id = buf.data = NULL;
 }
-        
+
 %}
 
 %%
