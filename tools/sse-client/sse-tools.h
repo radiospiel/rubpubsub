@@ -15,7 +15,7 @@ extern char** command;
 extern unsigned command_ofs;
 
 /*
- * The \a onEvent function builds the
+ * The \a on_event function builds the
  * final command to run from the values in \a command and \a command_ofs
  * and its \a event and \a id parameters; i.e. when you run sse-client
  * using
@@ -29,7 +29,7 @@ extern unsigned command_ofs;
  * where <event> and <id> are the event attributes; 
  * and the data part will be written to process_events STDIN.
  */
-extern void onEvent(const char* event, const char* id, const char* data);
+extern void on_event(const char* event, const char* id, const char* data);
 
 /*
  * Write \a dataLen bytes from \a data to \a fd.
@@ -47,5 +47,12 @@ extern void die(const char* msg);
  * the process via _exit(2).
  */
 extern void _die(const char* msg);
+
+/*
+ * connect to the SSE stream at \a url. Data received is reported via 
+ * the on_data callback function.
+ */
+extern void connect_to_url(const char* url, 
+size_t(*on_data)(char *ptr, size_t size, size_t nmemb, void *userdata));
 
 #endif

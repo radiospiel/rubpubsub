@@ -6,7 +6,7 @@ unsigned command_ofs = 0;
 #define READ 0
 #define WRITE 1
 
-void onEvent(const char* event, const char* id, const char* data)
+void on_event(const char* event, const char* id, const char* data)
 {
   // prepare command.
   command[command_ofs] = (char*)event;

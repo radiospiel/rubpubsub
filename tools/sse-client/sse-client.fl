@@ -52,7 +52,7 @@ static void flush()
     if(!msg.id)
       msg.id = "id";
     
-    onEvent(msg.event, msg.id, msg.data);
+    on_event(msg.event, msg.id, msg.data);
 
     msg.event = msg.id = msg.data = NULL;
     buf.event = buf.id = buf.data = NULL;
@@ -88,8 +88,16 @@ static void help() {
 }
 
 /*
- * process the event.
+ * curl callback to feed some data into the lexer.
  */
+static size_t on_data(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+  YY_BUFFER_STATE buffer = yy_scan_bytes(ptr, size * nmemb);
+  while(yylex());
+  yy_delete_buffer(buffer);
+  
+  return size * nmemb;
+}
 
 int main(int argc, const char** argv) 
 {
@@ -123,17 +131,8 @@ int main(int argc, const char** argv)
   
   if(!command)
     help();
-    
-  char* curl = 0;
-  asprintf(&curl, "curl -N -s -S %s", url);
 
-  fprintf(stderr, "running %s\n", curl);
-  
-  yyin = popen(curl, "r");
-  setlinebuf(yyin);
-  
-  while(yylex());
-
+  connect_to_url(url, on_data);
   return 0;
 }
 
