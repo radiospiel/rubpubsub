@@ -3,9 +3,6 @@
 char** command = NULL;
 unsigned command_ofs = 0;
 
-#define READ 0
-#define WRITE 1
-
 void on_event(const char* event, const char* id, const char* data)
 {
   // prepare command.
@@ -21,18 +18,17 @@ void on_event(const char* event, const char* id, const char* data)
   if (pid == -1) die("fork");
   
   if (pid == 0) { /* the child */
-    close(fd[WRITE]);
-    dup2(fd[READ], READ);
+    close(fd[FD_WRITE]);
+    dup2(fd[FD_READ], FD_READ);
 
     execvp(command[0], command);
     _die(command[0]);  /* die via _exit: a failed child should not flush parent files */
   }
   else { /* code for parent */ 
-    close(fd[READ]);
+    close(fd[FD_READ]);
 
-    write_all(fd[WRITE], data, strlen(data));
-    write_all(fd[WRITE], "\n", 1);
-    close(fd[WRITE]);
+    write_all(fd[FD_WRITE], data, strlen(data));
+    close(fd[FD_WRITE]);
     
     int status = 0;
     waitpid(pid, &status, 0);

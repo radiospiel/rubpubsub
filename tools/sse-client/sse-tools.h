@@ -7,6 +7,9 @@
 #include <ctype.h>
 #include <stdio.h>
 
+#define FD_READ 0
+#define FD_WRITE 1
+
 /* 
  * The \a command and \a command_ofs variables hold the command to
  * execute on each received event. 
