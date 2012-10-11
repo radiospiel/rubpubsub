@@ -465,10 +465,7 @@ char *yytext;
 #line 1 "sse-client.fl"
 #line 4 "sse-client.fl"
 
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
+#include "sse-tools.h"
 
 struct {
   char* id;
@@ -509,8 +506,6 @@ static void do_add(char** pBuf, const char* string)
 
 #define add(name, ptr) do { do_add(&buf.name, ptr); msg.name = buf.name; } while(0)
 
-static void onEvent(const char* event, const char* id, const char* data);
-
 static void flush()
 {
     if(!msg.data) return;
@@ -526,7 +521,7 @@ static void flush()
     buf.event = buf.id = buf.data = NULL;
 }
 
-#line 530 "sse-client.c"
+#line 525 "sse-client.c"
 
 #define INITIAL 0
 
@@ -708,10 +703,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 68 "sse-client.fl"
+#line 63 "sse-client.fl"
 
 
-#line 715 "sse-client.c"
+#line 710 "sse-client.c"
 
 	if ( !(yy_init) )
 		{
@@ -796,51 +791,51 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 70 "sse-client.fl"
+#line 65 "sse-client.fl"
 set(id, yytext + 4);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 71 "sse-client.fl"
+#line 66 "sse-client.fl"
 set(id, yytext + 3);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 72 "sse-client.fl"
+#line 67 "sse-client.fl"
 set(event, yytext + 7);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 73 "sse-client.fl"
+#line 68 "sse-client.fl"
 set(event, yytext + 6);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 74 "sse-client.fl"
+#line 69 "sse-client.fl"
 add(data, yytext + 6);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 75 "sse-client.fl"
+#line 70 "sse-client.fl"
 add(data, yytext + 5);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 77 "sse-client.fl"
+#line 72 "sse-client.fl"
 { flush(); }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 78 "sse-client.fl"
+#line 73 "sse-client.fl"
 { flush(); }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 80 "sse-client.fl"
+#line 75 "sse-client.fl"
 ECHO;
 	YY_BREAK
-#line 844 "sse-client.c"
+#line 839 "sse-client.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1834,7 +1829,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 80 "sse-client.fl"
+#line 75 "sse-client.fl"
 
 
 
@@ -1851,87 +1846,9 @@ static void help() {
   exit(1);
 }
 
-/* 
- * The command and command_ofs parameter keep the command to call.
- * This process will receive the event and id parameters as arguments;
- * i.e. when you run
- *
- *   unsse http://localhost:12567/abc process_events
- *
- * the process_events command will be called with parameters
- *
- *   process_events event id
- *
- * and the data part will be written to process_events STDIN.
- */
-static char** command = NULL;
-static unsigned command_ofs = 0;
-
 /*
  * process the event.
  */
-#define READ 0
-#define WRITE 1
-
-static void die(const char* msg) {
-  perror(msg); exit(1);
-}
-
-static int write_all(int fd, const void* data, unsigned dataLen) {
-  int len = 0;
-  while(len < dataLen) {
-    int written = write(fd, data, dataLen);
-    if(written < 0)
-      return -1;
-      
-    data += written;
-    dataLen -= written;
-    len += written;
-  }
-  
-  return len;
-}
-
-static void onEvent(const char* event, const char* id, const char* data)
-{
-  // prepare command.
-  command[command_ofs] = (char*)event;
-  command[command_ofs+1] = (char*)id;
-
-  // Prepare pipe for subprocess
-  int fd[2];
-  if (pipe(fd) != 0) die("pipe");
-  
-  // Start subprocess
-  pid_t pid = fork();
-  if (pid == -1) die("fork");
-  
-  if (pid == 0) { /* the child */
-    close(fd[WRITE]);
-    dup2(fd[READ], READ);
-
-    execvp(command[0], command);
-    perror(command[0]);
-    
-    _exit(1);  /* the execvp() failed - a failed child should not flush parent files */
-  }
-  else { /* code for parent */ 
-    close(fd[READ]);
-
-    write_all(fd[WRITE], data, strlen(data));
-    write_all(fd[WRITE], "\n", 1);
-    close(fd[WRITE]);
-    
-    int status = 0;
-    waitpid(pid, &status, 0);
-    
-    // Show results if something broke.
-    if(WIFEXITED(status) && WEXITSTATUS(status) != 0)
-      fprintf(stderr, "child exited with stats %d\n", WEXITSTATUS(status));
-    else if(WIFSIGNALED(status))
-      fprintf(stderr, "child exited of signal %d\n", WTERMSIG(status));
-  }
-}
 
 int main(int argc, const char** argv) 
 {
