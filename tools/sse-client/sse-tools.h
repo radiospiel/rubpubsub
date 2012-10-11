@@ -7,8 +7,15 @@
 #include <ctype.h>
 #include <stdio.h>
 
-#define FD_READ 0
-#define FD_WRITE 1
+#define FD_READ   0
+#define FD_WRITE  1
+
+#define USERAGENT "rubpubsub native client"
+
+#include <curl/curl.h>
+
+extern void curl_perform(CURL* curl);
+extern CURL* curl_handle(const char* url);
 
 /* 
  * The \a command and \a command_ofs variables hold the command to
