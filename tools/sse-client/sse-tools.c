@@ -60,6 +60,36 @@ int write_all(int fd, const char* data, unsigned dataLen) {
 
 
 void die(const char* msg) {
+/*
+ * read data from fd handle, return a malloced area in the pResult 
+ * buffer - this must be freed by the caller - and returns the number
+ * of bytes read.
+ */
+int read_all(int fd, char** pResult) {
+  char* buf[8192]; 
+  int length = 0;
+  
+  *pResult = 0;
+  
+  while(1) {
+    int bytes_read = read(fd, buf, sizeof(buf));
+
+    if(bytes_read < 0)
+      return -1;
+    if(bytes_read == 0) 
+      break;
+
+    *pResult = realloc(*pResult, length + bytes_read + 1);
+    
+    memcpy(*pResult + length, buf, bytes_read);
+    length += bytes_read;
+  }
+
+  if(*pResult) {
+    (*pResult)[length] = 0;
+  }
+  return length;
+}
   perror(msg); 
   exit(1);
 }

@@ -40,6 +40,13 @@ extern void on_event(const char* event, const char* id, const char* data);
 extern int write_all(int fd, const char* data, unsigned dataLen);
 
 /*
+ * read data from fd handle, return a malloced area in the pResult 
+ * buffer - this must be freed by the caller - and returns the number
+ * of bytes read.
+ */
+int read_all(int fd, char** pResult);
+
+/*
  * Write out an error message using perror(3) and exit 
  * the process via exit(3).
  */
