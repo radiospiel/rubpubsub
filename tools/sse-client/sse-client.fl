@@ -4,6 +4,8 @@
 
 #include "sse-tools.h"
 
+#define YYDEBUG 1
+
 struct {
   char* id;
   char* event;
@@ -70,7 +72,8 @@ data:\ .*       add(data, yytext + 6);
 data:.*         add(data, yytext + 5);
 
 .*              { flush(); }
-\n              { flush(); }
+\n\n            { flush(); }
+\n              { /* no yet flushing - this could be within an event */ }
 
 %%
 
