@@ -5,9 +5,13 @@
 
 int main(int argc, const char** argv) 
 {
-  while(*++argv)
-    puts(*argv);
-
+  const char *event = NULL, *id = NULL;
+  if(*++argv) event = *argv;
+  if(*++argv) id = *argv;
+  
+  if(event) printf("%s#", event);
+  if(id) printf("%s> ", id);
+    
   int ch;
   while(EOF != (ch = getchar()))
     putchar(ch);
