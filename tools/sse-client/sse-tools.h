@@ -34,7 +34,7 @@ extern void onEvent(const char* event, const char* id, const char* data);
 /*
  * Write \a dataLen bytes from \a data to \a fd.
  */
-extern int write_all(int fd, const void* data, unsigned dataLen);
+extern int write_all(int fd, const char* data, unsigned dataLen);
 
 /*
  * Write out an error message using perror(3) and exit 

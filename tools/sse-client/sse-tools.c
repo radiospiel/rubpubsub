@@ -48,19 +48,18 @@ void onEvent(const char* event, const char* id, const char* data)
 /*
  * write dataLen bytes from data to the fd handle.
  */
-int write_all(int fd, const void* data, unsigned dataLen) {
-  int len = 0;
-  while(len < dataLen) {
-    int written = write(fd, data, dataLen);
+int write_all(int fd, const char* data, unsigned dataLen) {
+  const char *s = data, *e = data + dataLen;
+  
+  while(data < e) {
+    int written = write(fd, data, e - data);
     if(written < 0)
       return -1;
 
     data += written;
-    dataLen -= written;
-    len += written;
   }
 
-  return len;
+  return e - s;
 }
 
 
