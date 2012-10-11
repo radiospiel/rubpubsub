@@ -5,6 +5,8 @@ unsigned command_ofs = 0;
 
 void on_event(const char* event, const char* id, const char* data)
 {
+  // fprintf(stderr, "on_event %s#%s: '%s'\n", event, id, data);
+  
   // prepare command.
   command[command_ofs] = (char*)event;
   command[command_ofs+1] = (char*)id;
@@ -58,8 +60,6 @@ int write_all(int fd, const char* data, unsigned dataLen) {
   return e - s;
 }
 
-
-void die(const char* msg) {
 /*
  * read data from fd handle, return a malloced area in the pResult 
  * buffer - this must be freed by the caller - and returns the number
@@ -90,6 +90,8 @@ int read_all(int fd, char** pResult) {
   }
   return length;
 }
+
+void die(const char* msg) {
   perror(msg); 
   exit(1);
 }
