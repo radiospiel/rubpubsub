@@ -47,27 +47,105 @@ __END__
 </form>
 
 @@ chat
-<h1>This is a chat</h1>
+<style type="text/css">
 
-<pre id='chat'> </pre>
+body {
+  background-color: black;
+  margin: 0;
+  padding: 4px; 
+}
 
-<form>
-  <input id='msg' placeholder='type message here...' />
-</form>
+#page {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+}
+#page .left {
+  width: 85%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  position: absolute;
+}
+#page .right {
+  width: 15%;
+  height: 100%;
+  top: 0;
+  right: 0;
+  position: absolute;
+  background-color: #222;
+}
 
-<pre id='log'> </pre>
-<style type="text/css" media="screen">
-  #log .error { color: red; }
-  #log .info { color: green; }
+#chat {
+  background: black;
+  color: white;  
+  overflow: auto;
+  font-family: monospace;
+  width: 100%;
+  height: 90%;
+}
+
+#msg { 
+  width: 100%; 
+  position: absolute;
+  bottom: 2em;
+}
+
+#log {
+}
+
+#log .error { color: red; }
+#log .info { color: lightgreen; }
+
+
 </style>
+
+<div id="page">
+  <div class="left">
+    <div id='chat'> 
+      <div>
+        <p>
+        Hi. I am a HTTP-friendly chat application.
+        </p>
+        <p>
+        I read server sent events to show you what is going on, I send
+        notifications via HTTP POST.
+      </p>
+      <p>
+        I am built using the rubpubsub gem. In fact, I am one of the example applications therre.
+        Find my source code here: <a href="http://github.com/radiospiel/rubpubsub">github.com/radiospiel/rubpubsub</a>.
+      </p>
+      </div>
+    </div>
+    <form>
+      <input id='msg' placeholder='type message here...' />
+    </form>
+  </div>
+  <div class="right">
+    <div id='log'>  </pre>
+  </div>
+</div>
+
 <script type="text/javascript" charset="utf-8">
 (function(user) {
+  function scrollToBottom(node) {
+    $(node).each( function() 
+    {
+       // certain browsers have a bug such that scrollHeight is too small
+       // when content does not fill the client area of the element
+       var scrollHeight = Math.max(this.scrollHeight, this.clientHeight);
+       this.scrollTop = scrollHeight - this.clientHeight;
+    });
+  };
+  
   var log = {
-    info:     function(msg) { log.message(msg, "info"); },
-    error:    function(msg) { log.message(msg, "error"); },
     message:  function(msg, klass) {
       $("<div class='" + klass + "'></div>").text(msg).appendTo('#log');
-    }
+      scrollToBottom('#log');
+    },
+    info:     function(msg) { log.message(msg, "info"); },
+    error:    function(msg) { log.message(msg, "error"); }
   };
 
   function publish(msg, channels) {
@@ -84,12 +162,13 @@ __END__
   var es = new EventSource(subscription_url);
   es.onerror = function(e)   { log.error("EventSource error"); };
 
-    var log_event = function(event) {
-      $("<div></div>").text(event.data).appendTo('#chat'); 
-    };
+  var log_event = function(event) {
+    $("<div></div>").text(event.data).appendTo('#chat'); 
+    scrollToBottom('#chat');
+  };
 
-    es.addEventListener(user, log_event);
-    es.addEventListener('chat', log_event);
+  es.addEventListener(user, log_event);
+  es.addEventListener('chat', log_event);
   
   function publish_chat_message(msg) {
     // Find channels from the message. A message that mentions 
