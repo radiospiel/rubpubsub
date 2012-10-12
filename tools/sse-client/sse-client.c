@@ -360,8 +360,8 @@ static void yy_fatal_error (yyconst char msg[]  );
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
 
-#define YY_NUM_RULES 9
-#define YY_END_OF_BUFFER 10
+#define YY_NUM_RULES 10
+#define YY_END_OF_BUFFER 11
 /* This struct is not used in this scanner,
    but its presence is necessary. */
 struct yy_trans_info
@@ -369,11 +369,12 @@ struct yy_trans_info
 	flex_int32_t yy_verify;
 	flex_int32_t yy_nxt;
 	};
-static yyconst flex_int16_t yy_accept[31] =
+static yyconst flex_int16_t yy_accept[32] =
     {   0,
-        7,    7,   10,    7,    8,    7,    7,    7,    7,    7,
-        7,    7,    7,    7,    2,    7,    7,    2,    1,    6,
-        7,    1,    6,    5,    4,    5,    4,    3,    3,    0
+        7,    7,   11,    7,    9,    7,    7,    7,    7,    8,
+        7,    7,    7,    7,    7,    2,    7,    7,    2,    1,
+        6,    7,    1,    6,    5,    4,    5,    4,    3,    3,
+        0
     } ;
 
 static yyconst flex_int32_t yy_ec[256] =
@@ -414,38 +415,38 @@ static yyconst flex_int32_t yy_meta[12] =
         1
     } ;
 
-static yyconst flex_int16_t yy_base[39] =
+static yyconst flex_int16_t yy_base[40] =
     {   0,
-        0,    7,   32,    0,   33,   26,   19,   23,    0,   18,
-       20,   22,   20,   15,   20,   18,   11,    0,    0,   17,
-       15,    0,    0,    0,   15,    0,    0,    0,    0,   33,
-       15,   11,   10,    9,    4,    3,    2,    0
+        0,    7,   33,    0,   30,   26,   19,   23,    0,   34,
+       18,   20,   22,   20,   15,   20,   18,   11,    0,    0,
+       17,   15,    0,    0,    0,   15,    0,    0,    0,    0,
+       34,   15,   11,   10,    9,    4,    3,    2,    0
     } ;
 
-static yyconst flex_int16_t yy_def[39] =
+static yyconst flex_int16_t yy_def[40] =
     {   0,
-       31,   31,   30,   32,   30,   32,   32,   32,   32,   32,
-       32,   32,   32,   32,   33,   32,   32,   33,   34,   35,
-       32,   34,   35,   36,   37,   36,   37,   38,   38,    0,
-       30,   30,   30,   30,   30,   30,   30,   30
+       32,   32,   31,   33,   31,   33,   33,   33,   33,   31,
+       33,   33,   33,   33,   33,   34,   33,   33,   34,   35,
+       36,   33,   35,   36,   37,   38,   37,   38,   39,   39,
+        0,   31,   31,   31,   31,   31,   31,   31,   31
     } ;
 
-static yyconst flex_int16_t yy_nxt[45] =
+static yyconst flex_int16_t yy_nxt[46] =
     {   0,
-       29,    5,   27,   26,   23,    6,    7,    8,    5,   22,
-       18,    9,    6,    7,    8,    4,    4,   28,   25,   24,
-       21,   20,   19,   17,   16,   15,   14,   13,   12,   11,
-       10,   30,    3,   30,   30,   30,   30,   30,   30,   30,
-       30,   30,   30,   30
+       30,    5,   28,   27,   24,    6,    7,    8,    5,   23,
+       19,    9,    6,    7,    8,    4,    4,   29,   26,   25,
+       22,   21,   20,   18,   17,   16,   15,   14,   13,   12,
+       11,   10,   31,    3,   31,   31,   31,   31,   31,   31,
+       31,   31,   31,   31,   31
     } ;
 
-static yyconst flex_int16_t yy_chk[45] =
+static yyconst flex_int16_t yy_chk[46] =
     {   0,
-       38,    1,   37,   36,   35,    1,    1,    1,    2,   34,
-       33,   32,    2,    2,    2,   31,   31,   25,   21,   20,
-       17,   16,   15,   14,   13,   12,   11,   10,    8,    7,
-        6,    3,   30,   30,   30,   30,   30,   30,   30,   30,
-       30,   30,   30,   30
+       39,    1,   38,   37,   36,    1,    1,    1,    2,   35,
+       34,   33,    2,    2,    2,   32,   32,   26,   22,   21,
+       18,   17,   16,   15,   14,   13,   12,   11,    8,    7,
+        6,    5,    3,   31,   31,   31,   31,   31,   31,   31,
+       31,   31,   31,   31,   31
     } ;
 
 static yy_state_type yy_last_accepting_state;
@@ -466,6 +467,8 @@ char *yytext;
 #line 4 "sse-client.fl"
 
 #include "sse-tools.h"
+
+#define YYDEBUG 1
 
 struct {
   char* id;
@@ -515,13 +518,13 @@ static void flush()
     if(!msg.id)
       msg.id = "id";
     
-    onEvent(msg.event, msg.id, msg.data);
+    on_event(msg.event, msg.id, msg.data);
 
     msg.event = msg.id = msg.data = NULL;
     buf.event = buf.id = buf.data = NULL;
 }
 
-#line 525 "sse-client.c"
+#line 528 "sse-client.c"
 
 #define INITIAL 0
 
@@ -703,10 +706,10 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 63 "sse-client.fl"
+#line 65 "sse-client.fl"
 
 
-#line 710 "sse-client.c"
+#line 713 "sse-client.c"
 
 	if ( !(yy_init) )
 		{
@@ -759,13 +762,13 @@ yy_match:
 			while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 				{
 				yy_current_state = (int) yy_def[yy_current_state];
-				if ( yy_current_state >= 31 )
+				if ( yy_current_state >= 32 )
 					yy_c = yy_meta[(unsigned int) yy_c];
 				}
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 33 );
+		while ( yy_base[yy_current_state] != 34 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -791,51 +794,57 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 65 "sse-client.fl"
+#line 67 "sse-client.fl"
 set(id, yytext + 4);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 66 "sse-client.fl"
+#line 68 "sse-client.fl"
 set(id, yytext + 3);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 67 "sse-client.fl"
+#line 69 "sse-client.fl"
 set(event, yytext + 7);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 68 "sse-client.fl"
+#line 70 "sse-client.fl"
 set(event, yytext + 6);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 69 "sse-client.fl"
+#line 71 "sse-client.fl"
 add(data, yytext + 6);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 70 "sse-client.fl"
+#line 72 "sse-client.fl"
 add(data, yytext + 5);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 72 "sse-client.fl"
+#line 74 "sse-client.fl"
 { flush(); }
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 73 "sse-client.fl"
+#line 75 "sse-client.fl"
 { flush(); }
 	YY_BREAK
 case 9:
+/* rule 9 can match eol */
 YY_RULE_SETUP
-#line 75 "sse-client.fl"
+#line 76 "sse-client.fl"
+{ /* no yet flushing - this could be within an event */ }
+	YY_BREAK
+case 10:
+YY_RULE_SETUP
+#line 78 "sse-client.fl"
 ECHO;
 	YY_BREAK
-#line 839 "sse-client.c"
+#line 848 "sse-client.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1127,7 +1136,7 @@ static int yy_get_next_buffer (void)
 		while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 			{
 			yy_current_state = (int) yy_def[yy_current_state];
-			if ( yy_current_state >= 31 )
+			if ( yy_current_state >= 32 )
 				yy_c = yy_meta[(unsigned int) yy_c];
 			}
 		yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
@@ -1155,11 +1164,11 @@ static int yy_get_next_buffer (void)
 	while ( yy_chk[yy_base[yy_current_state] + yy_c] != yy_current_state )
 		{
 		yy_current_state = (int) yy_def[yy_current_state];
-		if ( yy_current_state >= 31 )
+		if ( yy_current_state >= 32 )
 			yy_c = yy_meta[(unsigned int) yy_c];
 		}
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
-	yy_is_jam = (yy_current_state == 30);
+	yy_is_jam = (yy_current_state == 31);
 
 	return yy_is_jam ? 0 : yy_current_state;
 }
@@ -1829,7 +1838,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 75 "sse-client.fl"
+#line 78 "sse-client.fl"
 
 
 
@@ -1847,8 +1856,16 @@ static void help() {
 }
 
 /*
- * process the event.
+ * curl callback to feed some data into the lexer.
  */
+static size_t on_data(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+  YY_BUFFER_STATE buffer = yy_scan_bytes(ptr,size * nmemb);
+  while(yylex());
+  yy_delete_buffer(buffer);
+  
+  return size * nmemb;
+}
 
 int main(int argc, const char** argv) 
 {
@@ -1882,17 +1899,8 @@ int main(int argc, const char** argv)
   
   if(!command)
     help();
-    
-  char* curl = 0;
-  asprintf(&curl, "curl -N -s -S %s", url);
 
-  fprintf(stderr, "running %s\n", curl);
-  
-  yyin = popen(curl, "r");
-  setlinebuf(yyin);
-  
-  while(yylex());
-
+  connect_to_url(url, on_data);
   return 0;
 }
 
