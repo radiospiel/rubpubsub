@@ -15,6 +15,8 @@ int main(int argc, const char** argv)
   int ch;
   while(EOF != (ch = getchar()))
     putchar(ch);
-    
+  
+  putchar('\n');
+  
   return 0;
 }
