@@ -1,6 +1,3 @@
-# require "bundler/ui"
-# require "thor/shell"
-
 module UI
   extend self
   
