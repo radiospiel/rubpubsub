@@ -3,16 +3,42 @@ require "redis"
 require "uuid"
 require_relative "evented_redis"
 
-# The Redis adapter for RubPubSub
+# The Redis adapter for RubPubSub. 
+#
+# This adapter DOES NOT map incoming subcriptions onto individual redis 
+# channels. Why?
+#
+# Would we use one redis channel per RubPubSub channel, then each incoming
+# RubPubSub connection required not only the connection to the SSE client,
+# but an additional connection to the Redis server to. As file handles 
+# and sockets are limited resources this would quickly exhaust the available 
+# resources.
+#
+# Instead we use ONE redis channel for all rubpubsub connections; this
+# code is simpler than the second case and the high usage scenario of 
+# that case anyways.
+#
+# The channel name is read from the URL in the constructor. If there is none,
+# then we'll set a default name.
 class RubPubSub::Adapter::Redis
-  
+
+  # The default redis channel for the RubPubSub adapter.
+  DEFAULT_CHANNEL = "RubPubSub"
+
   def initialize(url) #:nodoc:
-    @subscriptions_by_channel = Hash.new { |hash, key| hash[key] = [] }
+    @subscriptions_by_channel = Hash.new { |hash, key| hash[key] = Set.new }
 
     uri = URI.parse(url)
 
+    @redis_channel = uri.path.gsub(/^\//, "")
+    if @redis_channel.empty?
+      @redis_channel = DEFAULT_CHANNEL
+    end
+
     @subscriber = ::EventedRedis.connect(host: uri.host, port: uri.port, password: uri.password)
     @publisher = ::Redis.new(host: uri.host, port: uri.port, password: uri.password)
+  
+    redis_subscribe
   end
 
   # The Subscription object.
@@ -33,10 +59,8 @@ class RubPubSub::Adapter::Redis
     raise ArgumentError if channels.empty?
     
     Subscription.new(channels, &block).tap do |subscription|
-      resubscribe_if_needed do
-        channels.each do |channel|
-          @subscriptions_by_channel[channel] << subscription
-        end
+      channels.each do |channel|
+        @subscriptions_by_channel[channel] << subscription
       end
     end
   end
@@ -44,14 +68,22 @@ class RubPubSub::Adapter::Redis
   @@uuid ||= UUID.new
   
   # Publish a message to a channel
+  #
+  # Parameters:
+  # - +channel+: the name of the channel
+  # - +message+: the message to send
+  # - +options+: an options hash, with these potential keys:
+  #   - +id+: the id of the message.
   def publish(channel, message, options = {})
     id = options[:id] || @@uuid.generate
-    @publisher.publish channel, pack_message_and_id(message, id)
+    @publisher.publish @redis_channel, pack_message(message, :id => id, :channel => channel)
     id
   end
   
   # Unsubscribe a subscription.
   def unsubscribe(subscription)
+    # expect! subscription => Subscription
+    
     #
     # Remove subscription from all stored subscriptions.
     subscription.channels.each do |channel|
@@ -72,10 +104,6 @@ class RubPubSub::Adapter::Redis
     
     empty_channels.
       each { |channel| @subscriptions_by_channel.delete channel }
-
-    #
-    # Note that we do not resubscribe, even if there are have less channels
-    # than before. Instead wait for the next subscription to resubscribe.
   end
 
   private
@@ -85,46 +113,40 @@ class RubPubSub::Adapter::Redis
     @subscriptions_by_channel.keys
   end
   
-  # yield to the block, and resubscribe, if there are any new
-  # subscribed channels
-  def resubscribe_if_needed(&block)
-    initially_subscribed_channels = subscribed_channels.dup
-
-    yield
-  ensure
-    return if (subscribed_channels - initially_subscribed_channels).empty?
-    resubscribe
-  end
-
-  # re-subscribe @subscriber
-  def resubscribe
-    @subscriber.unsubscribe
-    
-    @subscriber.subscribe(*subscribed_channels) do |message, channel, data|
+  # subscribe to the rubpubsub channel
+  def redis_subscribe
+    @subscriber.subscribe(@redis_channel) do |message, _, data|
       case message
       when "subscribe"
         # nop
       when "unsubscribe"
         # nop
       when "message"
-        subscriptions = @subscriptions_by_channel[channel]
+        body, headers = unpack_message(data)
+        channel, id = headers.values_at(:channel, :id)
 
-        message, id = unpack_message_and_id(data)
-        subscriptions.each { |subscription| subscription.call(channel, message, id) }
+        @subscriptions_by_channel[channel].each do |subscription| 
+          subscription.call(channel, body, id) 
+        end
       else
         STDERR.puts "Don't know how to handle #{message.inspect}"
       end
     end
   end
   
-  def pack_message_and_id(msg, id)
-    "#{id}:#{msg}"
+  def pack_message(body, headers)
+    header = headers.map { |k,v| "#{k}: #{v}\n" }.join
+    "#{header}\n#{body}"
   end
 
-  def unpack_message_and_id(msg)
-    expect! msg => /:/
+  def unpack_message(msg)
+    header, body = msg.split("\n\n")
     
-    id, msg = msg.split(":", 2)
-    [ msg, id ]
+    headers = header.split("\n").inject({}) do |hash, line|
+      key, value = line.split(": ", 2)
+      hash.update key.to_sym => value
+    end
+
+    [ body, headers ]
   end
 end
