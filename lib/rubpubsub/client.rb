@@ -27,7 +27,7 @@ class RubPubSub::Client
   
   # subscribe to a channel. Returns a Subscription object.
   def do_subscribe(channel, options = {}, &block)
-    W "#{url}: connecting"
+    STDERR.puts "#{url}: connecting"
     said_hello = true
     if options[:hello]
       said_hello = false
@@ -81,7 +81,7 @@ class RubPubSub::Client
     url = File.join(@url, channel)
     uri = URI(url)
     http = Net::HTTP.start(uri.host, uri.port)
-    response = http.post uri.path, message
+    response = http.post uri.path, message.to_s
     body = response.read_body
     body.split("\n", 2).first
   end
@@ -96,7 +96,8 @@ class RubPubSub::Client
         return yield
       rescue Errno::ECONNREFUSED
         if repeat == 0
-          E "[#{CommandLine.url}] Cannot connect, giving up."
+          STDERR.puts "Connection refused, giving up."
+          raise
         end
 
         repeat -= 1

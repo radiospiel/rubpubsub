@@ -1,0 +1,11 @@
+# a rubpubsub server process
+server: bundle exec rackup -p 12345 ../chat/config.ru
+
+#
+producer: ruby producer.rb ${URL:-http://localhost:12345}
+
+# a listener process
+subscriber: ruby subscriber.rb ${URL:-http://localhost:12345}
+
+# a native listener
+# listener: sleep 2; ../tools/sse-client/sse-client http://localhost:12345/sub/test ruby dog.rb
